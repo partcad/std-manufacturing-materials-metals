@@ -5,10 +5,14 @@
 # at a time, and 'material/metals:al-5052-h32' would read as neither.
 name: //pub/std/manufacturing/material/metal
 
-# 'materials:' is only read by the PartCAD that has the material object type;
-# before it, this file parsed and every material in it was silently ignored.
-# TODO: raise to the released version that carries it once one exists.
-partcad: ">=0.8.46"
+# Every density below is in kg/m^3, which is the unit PartCAD reads a density in
+# from the release that resolves a part's mass from its material. Before it, a
+# density was read in g/mm^3, in which the same substance is a number a million
+# times smaller - so an older PartCAD would make every part made of these
+# materials weigh a million times what it does. It is refused here rather than
+# left to weigh anything.
+# TODO: set to the release partcad/partcad#755 lands in, if that is not this one.
+partcad: ">=0.8.169"
 
 desc: Standard metals and alloys, as PartCAD materials.
 
@@ -22,10 +26,10 @@ desc: Standard metals and alloys, as PartCAD materials.
 #   part of what was ordered: 6061-T6 and 6061-O are the same alloy and not the
 #   same material to build out of.
 #
-# * 'density' is g/mm^3, which is what PartCAD computes a mass in. A datasheet
-#   quotes g/cm^3, 1000x larger: 5052 at 2.68 g/cm^3 is 0.00268 here. Density is
-#   a property of the alloy rather than of the temper, so it is the one fact
-#   below that does not move when the temper does.
+# * 'density' is kg/m^3, the one unit PartCAD has for a density. A datasheet
+#   often quotes g/cm^3, 1000x smaller: 5052 at 2.68 g/cm^3 is 2680 here.
+#   Density is a property of the alloy rather than of the temper, so it is the
+#   one fact below that does not move when the temper does.
 #
 # * 'mu' is a typical *dry, unlubricated, self-mated* sliding coefficient - the
 #   pair the friction tables tabulate for a metal, and the single number every
@@ -50,7 +54,7 @@ materials:
       sheet grades - but it does not machine cleanly and cannot be strengthened
       by heat treatment afterwards.
     url: https://en.wikipedia.org/wiki/5052_aluminium_alloy
-    density: 0.00268 # g/mm^3
+    density: 2680 # kg/m^3
     mu: 1.05
     tags:
       - metal
@@ -71,7 +75,7 @@ materials:
       affected zone back towards the annealed strength, so a welded frame is
       not a T6 frame unless it is re-treated.
     url: https://en.wikipedia.org/wiki/6061_aluminium_alloy
-    density: 0.0027
+    density: 2700
     mu: 1.05
     tags:
       - metal
@@ -90,7 +94,7 @@ materials:
       rails and heat-sink fins are made of. Robot cells and test rigs are
       largely built out of it without anybody machining anything.
     url: https://en.wikipedia.org/wiki/6063_aluminium_alloy
-    density: 0.0027
+    density: 2700
     mu: 1.05
     tags:
       - metal
@@ -107,7 +111,7 @@ materials:
       slightly less obliging to machine and anodise. Plate and extrusion for
       frames, brackets and transport structures.
     url: https://en.wikipedia.org/wiki/6082_aluminium_alloy
-    density: 0.0027
+    density: 2700
     mu: 1.05
     tags:
       - metal
@@ -126,7 +130,7 @@ materials:
       not weldable, is more prone to stress-corrosion cracking than the 5000
       and 6000 series, and costs several times as much.
     url: https://en.wikipedia.org/wiki/7075_aluminium_alloy
-    density: 0.00281
+    density: 2810
     mu: 1.05
     tags:
       - metal
@@ -145,7 +149,7 @@ materials:
       thin layer of pure aluminium on each face - and it is riveted rather than
       welded.
     url: https://en.wikipedia.org/wiki/2024_aluminium_alloy
-    density: 0.00278
+    density: 2780
     mu: 1.05
     tags:
       - metal
@@ -163,7 +167,7 @@ materials:
       wherever a welded aluminium structure has to be as strong as the sheet it
       was made from.
     url: https://en.wikipedia.org/wiki/5083_aluminium_alloy
-    density: 0.00266
+    density: 2660
     mu: 1.05
     tags:
       - metal
@@ -182,7 +186,7 @@ materials:
       gearbox and pump housings, and aerospace castings that have to be
       radiographed and certified.
     url: https://en.wikipedia.org/wiki/Aluminium_alloy
-    density: 0.00268
+    density: 2680
     mu: 1.05
     tags:
       - metal
@@ -201,7 +205,7 @@ materials:
       it is not usefully weldable or heat treatable because of the gas trapped
       during the shot.
     url: https://en.wikipedia.org/wiki/Aluminium_alloy
-    density: 0.00271
+    density: 2710
     mu: 1.05
     tags:
       - metal
@@ -222,7 +226,7 @@ materials:
       constraint. Too soft to hold a bearing surface as it is, so it is case
       hardened when it has to.
     url: https://en.wikipedia.org/wiki/Carbon_steel
-    density: 0.00787
+    density: 7870
     mu: 0.6
     tags:
       - metal
@@ -238,7 +242,7 @@ materials:
       in shafts, axles, gears, sprockets and hydraulic rod. Stronger than 1018
       as supplied and noticeably less pleasant to weld.
     url: https://en.wikipedia.org/wiki/Carbon_steel
-    density: 0.00787
+    density: 7870
     mu: 0.6
     tags:
       - metal
@@ -254,7 +258,7 @@ materials:
       by its minimum yield rather than by its composition, which is why it is a
       grade rather than an alloy.
     url: https://en.wikipedia.org/wiki/A36_steel
-    density: 0.00785
+    density: 7850
     mu: 0.6
     tags:
       - metal
@@ -271,7 +275,7 @@ materials:
       unusually for a strong alloy steel - it TIG welds thin wall without
       needing heat treatment afterwards for most airframe work.
     url: https://en.wikipedia.org/wiki/41xx_steel
-    density: 0.00785
+    density: 7850
     mu: 0.6
     tags:
       - metal
@@ -289,7 +293,7 @@ materials:
       dies. Bought pre-hardened and tempered as often as it is heat treated
       after machining.
     url: https://en.wikipedia.org/wiki/41xx_steel
-    density: 0.00785
+    density: 7850
     mu: 0.6
     tags:
       - metal
@@ -306,7 +310,7 @@ materials:
       hardenability deep into a thick section and toughness at high strength,
       and it is one of the alloys hydrogen embrittlement rules are written for.
     url: https://en.wikipedia.org/wiki/SAE_steel_grades
-    density: 0.00785
+    density: 7850
     mu: 0.6
     tags:
       - metal
@@ -323,7 +327,7 @@ materials:
       stronger in the panel. Rails, cross members and reinforcements, where the
       structure has to absorb a crash rather than resist it.
     url: https://en.wikipedia.org/wiki/Dual-phase_steel
-    density: 0.00785
+    density: 7850
     mu: 0.6
     tags:
       - metal
@@ -343,7 +347,7 @@ materials:
       welded in the field to any useful effect, which is why rescue tooling
       cares which cars have it.
     url: https://en.wikipedia.org/wiki/Boron_steel
-    density: 0.00785
+    density: 7850
     mu: 0.6
     tags:
       - metal
@@ -364,7 +368,7 @@ materials:
       break the chip also start pits, so it corrodes more readily than 304 and
       is not meant to be welded.
     url: https://en.wikipedia.org/wiki/SAE_steel_grades
-    density: 0.008
+    density: 8000
     mu: 0.7
     tags:
       - metal
@@ -381,7 +385,7 @@ materials:
       outdoors. Non-magnetic as annealed, though cold work raises a little
       ferromagnetism in it.
     url: https://en.wikipedia.org/wiki/SAE_304_stainless_steel
-    density: 0.008
+    density: 8000
     mu: 0.7
     tags:
       - metal
@@ -399,7 +403,7 @@ materials:
       heat affected zone, and it is the most common stainless powder for
       printed metal parts.
     url: https://en.wikipedia.org/wiki/SAE_316L_stainless_steel
-    density: 0.008
+    density: 8000
     mu: 0.7
     tags:
       - metal
@@ -418,7 +422,7 @@ materials:
       valve and pump shafts, injection mould inserts, and a common printed
       metal alloy.
     url: https://en.wikipedia.org/wiki/Precipitation_hardening
-    density: 0.0078
+    density: 7800
     mu: 0.6
     tags:
       - metal
@@ -442,7 +446,7 @@ materials:
       against itself, and it is unforgiving to machine - slow, sharp, flooded,
       and never rubbing.
     url: https://en.wikipedia.org/wiki/Ti-6Al-4V
-    density: 0.00443
+    density: 4430
     tags:
       - metal
       - titanium
@@ -459,7 +463,7 @@ materials:
       weld, with the same corrosion immunity. Sheet, tube, heat exchangers,
       chemical and marine hardware, and surgical instruments.
     url: https://en.wikipedia.org/wiki/Titanium
-    density: 0.00451
+    density: 4510
     tags:
       - metal
       - titanium
@@ -480,7 +484,7 @@ materials:
       housings, drone and exoskeleton frames, aircraft interior parts. It
       damps vibration well, corrodes readily unless coated, and burns as swarf.
     url: https://en.wikipedia.org/wiki/Magnesium_alloy
-    density: 0.00177
+    density: 1770
     tags:
       - metal
       - magnesium
@@ -496,7 +500,7 @@ materials:
       it corrodes far less than the older magnesium alloys it replaced, and it
       casts thinner walls than aluminium can.
     url: https://en.wikipedia.org/wiki/Magnesium_alloy
-    density: 0.00181
+    density: 1810
     tags:
       - metal
       - magnesium
@@ -516,7 +520,7 @@ materials:
       coils. Nothing affordable conducts electricity or heat better. Soft,
       heavy, and it work hardens as it is bent.
     url: https://en.wikipedia.org/wiki/Copper
-    density: 0.00889
+    density: 8890
     tags:
       - metal
       - copper
@@ -531,7 +535,7 @@ materials:
       steel allows. Corrosion resistant, non-sparking, and lead-free
       substitutes are displacing it where drinking water or RoHS is involved.
     url: https://en.wikipedia.org/wiki/Brass
-    density: 0.0085
+    density: 8500
     tags:
       - metal
       - copper
@@ -547,7 +551,7 @@ materials:
       tolerates shock, dirt and marginal lubrication, and it is what a
       sintered, oil-impregnated bushing is made of.
     url: https://en.wikipedia.org/wiki/Bronze
-    density: 0.00893
+    density: 8930
     tags:
       - metal
       - copper
@@ -568,7 +572,7 @@ materials:
       notoriously hard on cutting tools, which is one reason so much of it is
       now printed.
     url: https://en.wikipedia.org/wiki/Inconel
-    density: 0.00819
+    density: 8190
     tags:
       - metal
       - nickel
@@ -584,7 +588,7 @@ materials:
       bellows, expansion joints, seawater and chemical hardware, and weld
       overlay on things made of something cheaper.
     url: https://en.wikipedia.org/wiki/Inconel
-    density: 0.00844
+    density: 8440
     tags:
       - metal
       - nickel
@@ -605,7 +609,7 @@ materials:
       robot bases: the flakes conduct heat out of a brake disc and swallow the
       chatter a machine frame would otherwise ring with.
     url: https://en.wikipedia.org/wiki/Gray_iron
-    density: 0.00715
+    density: 7150
     tags:
       - metal
       - cast-iron
@@ -623,7 +627,7 @@ materials:
       gearbox housings, pipe. Often the cheaper answer where a steel forging
       would otherwise be specified.
     url: https://en.wikipedia.org/wiki/Ductile_iron
-    density: 0.0071
+    density: 7100
     tags:
       - metal
       - cast-iron
@@ -644,7 +648,7 @@ materials:
       and takes plating well - at four times the density of aluminium, which
       is why it stays out of anything that has to be light.
     url: https://en.wikipedia.org/wiki/Zamak
-    density: 0.0066
+    density: 6600
     tags:
       - metal
       - zinc
