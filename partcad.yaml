@@ -6,25 +6,62 @@
 name: //pub/std/manufacturing/material/metal
 
 # Every density below is in kg/m^3, which is the unit PartCAD reads a density in
-# from the release that resolves a part's mass from its material. Before it, a
-# density was read in g/mm^3, in which the same substance is a number a million
-# times smaller - so an older PartCAD would make every part made of these
-# materials weigh a million times what it does. It is refused here rather than
-# left to weigh anything.
-# 0.8.174 is the release partcad/partcad#755 landed in.
-partcad: ">=0.8.174"
+# from the release that resolves a part's mass from its material (0.8.174,
+# partcad/partcad#755). Before it, a density was read in g/mm^3, in which the
+# same substance is a number a million times smaller.
+#
+# 0.10.21 is the first release with partcad/partcad's parametric-materials
+# change, which this file is written against: the bounds on a parameter
+# ('min:'/'max:'), the table functions the computed values are written with
+# ('pick', 'interpolate', 'interpolate_color'), a number computed from a
+# parameter in a material's fields, and 'type: enrich'. An older PartCAD has
+# none of the functions, so every computed value here would fail to evaluate,
+# and it does not know an enrich, so names such as 'al-6061-t6' would not
+# resolve to what they name. It is refused here rather than left to load a
+# catalogue it cannot read.
+partcad: ">=0.10.21"
 
 desc: Standard metals and alloys, as PartCAD materials.
 
-# Three conventions this file keeps, so that a reader does not have to work them
+# The conventions this file keeps, so that a reader does not have to work them
 # out from the entries:
 #
 # * The name is '<metal>-<designation>[-<temper>]' and never the bare
 #   designation. '5052:' is not a name in YAML at all - it is the integer 5052,
 #   which is not what a part's 'material' parameter says and not what the
-#   material name pattern accepts. The temper is part of the name because it is
-#   part of what was ordered: 6061-T6 and 6061-O are the same alloy and not the
-#   same material to build out of.
+#   material name pattern accepts. A name without a temper is the alloy, with
+#   its temper or condition as a parameter (below); a name with one - the
+#   'al-6061-t6' consumers reference - is that alloy in that temper, because
+#   6061-T6 and 6061-O are the same alloy and not the same material to build
+#   out of.
+#
+# * Parameters. Where the standard really has a dimension - a temper, a
+#   tempering temperature, a grade, a zinc or tin content - the material takes
+#   it as a parameter, and a reference names the value: 'al-6061;temper=O',
+#   'steel-4140;condition=quenched-and-tempered,tempering=540',
+#   'brass;zinc=0.35'. A temper or condition the standard names is a string
+#   from the list it may be; anything numbered is a number, with 'min:' and
+#   'max:' where the data behind it ends, and a value outside them is refused.
+#   Named without values a material is its defaults, which state what it
+#   stated before it had parameters, to the digit. Where it stated nothing for
+#   want of a condition - a 4340 with no temper, a copper with no temper, a
+#   gray iron with no grade - its default condition now states its value.
+#
+# * Computed values. A number that depends on a parameter is written as a
+#   PartCAD expression ('%...%'): 'pick' from a table where the standard names
+#   the condition, 'interpolate' - piecewise linear - through the published
+#   grades where it numbers it. The comment beside each says which points are
+#   sourced and where from; every value between two points is interpolated, and
+#   none is extrapolated ('interpolate' holds the end value past the last point,
+#   and the bounds keep a reference inside the points anyway). A material that
+#   is not parametric has plain numbers, as it always had.
+#
+# * Enrich. 'type: enrich' is a material of its own made from another one with
+#   parameter values for it, under its own name: 'al-6061-t6' is 'al-6061' with
+#   'temper: T6'. It takes every field of what it is made from and may state
+#   its own. A stacked one has parameters of its own, mapped onto the source's:
+#   'steel-4140-iso898' takes an ISO 898-1 property class and works out the
+#   tempering temperature of 4140 that meets it.
 #
 # * 'density' is kg/m^3, the one unit PartCAD has for a density. A datasheet
 #   often quotes g/cm^3, 1000x smaller: 5052 at 2.68 g/cm^3 is 2680 here.
@@ -37,6 +74,15 @@ desc: Standard metals and alloys, as PartCAD materials.
 #   steels, where those tables agree with each other; where they do not, it is
 #   left out rather than invented, and a part made of such a material gets the
 #   simulator's default exactly as it did before anybody catalogued it.
+#
+# * 'color' is claimed only by a bare metal whose surface as machined is what
+#   any part made of it looks like: aluminium, the stainless and machinable
+#   steels, bearing steel, titanium, copper, brass and bronze. A part made of one
+#   that states no colour is that colour (see 'colors' below). The rest claim
+#   none: hot-rolled and car-body steel comes scaled or coated and is painted,
+#   magnesium and zinc castings are coated or plated, cast iron is a casting
+#   skin until it is machined, and the nickel alloys have no colour here yet.
+#
 # What an analysis of a part made of one of these is solved with -- the
 # 'youngsModulus' (Pa), 'poissonsRatio', 'yieldStrength' (Pa) and
 # 'thermalConductivity' (W/(m*K)) beside each density -- is stated only where it
@@ -45,16 +91,88 @@ desc: Standard metals and alloys, as PartCAD materials.
 # absent was not known well enough to state: a part made of the material is then
 # analysed at the implementation's own default for it, which is visibly a
 # default, rather than at a guess that looks like a fact. PartCAD 0.10.17 and
-# later read these keys and hand them to a part's analyses. An older one ignores
-# them, and only its 'pc lint' reports them as unknown, so the 'partcad:' floor
-# above stays where it is: nothing an older PartCAD reads here has changed.
+# later read these keys and hand them to a part's analyses.
+
+# The natural colours of the bare metals the materials below claim. Each is a
+# display: how a part made of the metal is drawn, approximated from how the
+# metal looks as machined, and not a measurement of it. The copper alloys'
+# colours follow the names the Copper Development Association gives each
+# alloy's natural colour ('Copper in Architecture', A4039, pages 11, 27 and 28,
+# https://copper.org/publications/pub_list/pdf/A4039-ArchitecturalApplications.pdf),
+# which prints swatches of them as well and says itself that print can only
+# represent them. The greys are chosen to sit in the order the metals do -
+# aluminium lightest, then stainless, bearing steel, carbon steel and titanium,
+# which is the warm one - and aluminium, stainless and bearing steel are the
+# greys //pub/robotics/parts/gobilda already draws them in.
+colors:
+  aluminium:
+    desc: Bare aluminium as machined, which is also how it looks under a clear anodised coat. A display colour, approximated
+    display: "#C4C6C8"
+  stainless-steel:
+    desc: Stainless steel as machined. A display colour, approximated
+    display: "#A8ABAF"
+  bearing-steel:
+    desc: Through-hardened bearing steel as ground. A display colour, approximated
+    display: "#9A9DA1"
+  steel:
+    desc: Carbon and low-alloy steel as machined, before it is oiled, plated or painted. A display colour, approximated
+    display: "#8E9194"
+  titanium:
+    desc: Titanium as machined, a warmer and darker grey than steel. A display colour, approximated
+    display: "#8F8B86"
+  copper:
+    desc: >-
+      Copper as machined: the 'salmon red' CDA names as the natural colour of
+      C11000. A display colour, approximated
+    display: "#C27B5F"
+  brass:
+    desc: >-
+      Brass as machined, by its zinc content: from the red of copper through
+      the 'red gold' of commercial bronze (10 per cent zinc), the 'reddish
+      yellow' of red brass (15) and the 'yellow' of cartridge brass (30) to the
+      'reddish yellow' of Muntz metal (40), as CDA names them. A display
+      colour, approximated at each of those alloys and mixed in Oklab between
+      them
+    parameters:
+      zinc:
+        type: float
+        default: 0.3
+        min: 0
+        max: 0.4
+        desc: Zinc, mass fraction (0.3 is cartridge brass, C26000); the rest copper
+    # The stops: 0 copper (C11000, 'salmon red'), 0.10 C22000 ('red gold'), 0.15
+    # C23000 ('reddish yellow'), 0.30 C26000 ('yellow'), 0.40 C28000 ('reddish
+    # yellow'), each the CDA's name for the alloy's natural colour (A4039, above),
+    # each colour an approximation of that name; between two stops the colour is
+    # interpolated in Oklab.
+    display: "%interpolate_color(zinc, [0, 0.1, 0.15, 0.3, 0.4], ['#C27B5F', '#C68F62', '#C99A63', '#CDAE66', '#C7A25B'])%"
+  bronze:
+    desc: >-
+      Tin bronze as machined, the darker, browner gold of the bearing and
+      phosphor bronzes. A display colour, approximated
+    display: "#B08A5B"
+
 materials:
   #
   # Aluminium
   #
-  al-5052-h32:
-    formal: 5052-H32
-    full: Aluminium alloy 5052-H32
+  # The wrought alloys take their temper as a parameter. Every value of every
+  # temper is the Aluminum Association's typical figure ("AA; Typical", not a
+  # specification minimum) unless its comment says otherwise, from the data
+  # sheet Aerospace Specification Metals publishes for that temper, under
+  # https://www.aerospacemetals.com/wp-content/uploads/2023/06/ - the same data
+  # its pages on asm.matweb.com show, which this catalogue cited before it had
+  # tempers. A temper one sheet gives together with its stress-relieved twin
+  # ('T6, T651') is the same values under both names.
+  al-5052:
+    parameters:
+      temper:
+        type: string
+        enum: [O, H32, H34, H36, H38]
+        default: H32
+        desc: "The temper (ANSI H35.1): O annealed; H32, H34, H36, H38 strain hardened and stabilised, quarter, half, three-quarter and full hard"
+    formal: "5052-%temper%"
+    full: "Aluminium alloy 5052-%temper%"
     desc: |
       The sheet-metal aluminium. An Al-Mg alloy that is not heat treatable and
       gets its strength from work hardening, which is what makes it bend
@@ -65,12 +183,19 @@ materials:
       sheet grades - but it does not machine cleanly and cannot be strengthened
       by heat treatment afterwards.
     url: https://en.wikipedia.org/wiki/5052_aluminium_alloy
+    # The temper's sheets:
+    #   O    https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-5052-O.pdf
+    #   H32  https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5052H32 , as https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-5052-H32.pdf
+    #   H34  https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-5052-H34.pdf
+    #   H36  https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-5052-H36.pdf
+    #   H38  https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-5052-H38.pdf
     density: 2680 # kg/m^3
-    youngsModulus: 7.03e+10 # Pa, 5052-H32; H32 (strain hardened, stabilised), typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5052H32
-    poissonsRatio: 0.33 # 5052-H32; H32 (strain hardened, stabilised), typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5052H32
-    yieldStrength: 1.93e+8 # Pa, 5052-H32; H32 (strain hardened, stabilised), typical; typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5052H32
-    thermalConductivity: 138 # W/(m*K), 5052-H32; H32 (strain hardened, stabilised), typical; at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5052H32
+    youngsModulus: 7.03e+10 # Pa, 5052, every temper (70.3 GPa on every sheet above); average of tension and compression.
+    poissonsRatio: 0.33 # 5052, every temper; every sheet above.
+    yieldStrength: "%pick(temper, ['O', 'H32', 'H34', 'H36', 'H38'], [8.96e+7, 1.93e+8, 2.14e+8, 2.41e+8, 2.55e+8])%" # Pa, 5052; typical (AA), not a specification minimum; each temper's sheet above.
+    thermalConductivity: 138 # W/(m*K), 5052, every temper; at 77 F (25 C); every sheet above.
     mu: 1.05
+    color: ":aluminium"
     tags:
       - metal
       - aluminium
@@ -79,23 +204,38 @@ materials:
       - weldable
       - corrosion-resistant
       - fatigue-resistant
-  al-6061-t6:
-    formal: 6061-T6
-    full: Aluminium alloy 6061-T6
+  al-5052-h32:
+    type: enrich
+    source: ":al-5052"
+    with: {temper: H32}
+  al-6061:
+    parameters:
+      temper:
+        type: string
+        enum: [O, T4, T451, T6, T651]
+        default: T6
+        desc: "The temper (ANSI H35.1): O annealed; T4 solution heat treated and naturally aged; T6 solution heat treated and artificially aged; T451 and T651 the same, stress relieved by stretching (plate and bar)"
+    formal: "6061-%temper%"
+    full: "Aluminium alloy 6061-%temper%"
     desc: |
       The general-purpose structural aluminium: plate, bar and extrusion for
       machined robot links, mounting plates, heat sinks and airframe fittings.
       Heat treatable, weldable, and it machines and anodises well, which is why
-      it is the default for anything cut from solid. Welding anneals the heat
-      affected zone back towards the annealed strength, so a welded frame is
-      not a T6 frame unless it is re-treated.
+      it is the default for anything cut from solid - in T6, its usual temper.
+      Welding anneals the heat affected zone back towards the annealed
+      strength, so a welded frame is not a T6 frame unless it is re-treated.
     url: https://en.wikipedia.org/wiki/6061_aluminium_alloy
+    # The temper's sheets:
+    #   O          https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-6061-O.pdf
+    #   T4, T451   https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-6061-T4-6061-T451.pdf
+    #   T6, T651   https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6061T6 , as https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-6061-T6-6061-T651.pdf
     density: 2700
-    youngsModulus: 6.89e+10 # Pa, 6061-T6; T6, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6061T6
-    poissonsRatio: 0.33 # 6061-T6; T6, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6061T6
-    yieldStrength: 2.76e+8 # Pa, 6061-T6; T6, typical; typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6061T6
-    thermalConductivity: 167 # W/(m*K), 6061-T6; T6, typical; at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6061T6
+    youngsModulus: 6.89e+10 # Pa, 6061, every temper (68.9 GPa on every sheet above); average of tension and compression.
+    poissonsRatio: 0.33 # 6061, every temper; every sheet above, which gives it as estimated from similar alloys.
+    yieldStrength: "%pick(temper, ['O', 'T4', 'T451', 'T6', 'T651'], [5.52e+7, 1.45e+8, 1.45e+8, 2.76e+8, 2.76e+8])%" # Pa, 6061; typical (AA), not a specification minimum; each temper's sheet above.
+    thermalConductivity: "%pick(temper, ['O', 'T4', 'T451', 'T6', 'T651'], [180, 154, 154, 167, 167])%" # W/(m*K), 6061; at 77 F (25 C); each temper's sheet above.
     mu: 1.05
+    color: ":aluminium"
     tags:
       - metal
       - aluminium
@@ -103,9 +243,19 @@ materials:
       - weldable
       - heat-treatable
       - structural
-  al-6063-t5:
-    formal: 6063-T5
-    full: Aluminium alloy 6063-T5
+  al-6061-t6:
+    type: enrich
+    source: ":al-6061"
+    with: {temper: T6}
+  al-6063:
+    parameters:
+      temper:
+        type: string
+        enum: [O, T1, T4, T5, T6]
+        default: T5
+        desc: "The temper (ANSI H35.1): O annealed; T1 cooled from extrusion and naturally aged; T4 solution heat treated and naturally aged; T5 cooled from extrusion and artificially aged, the usual one; T6 solution heat treated and artificially aged"
+    formal: "6063-%temper%"
+    full: "Aluminium alloy 6063-%temper%"
     desc: |
       The extrusion alloy. It flows through a die into thin, complex and
       accurate sections and takes a clean anodised finish, at some cost in
@@ -113,18 +263,29 @@ materials:
       rails and heat-sink fins are made of. Robot cells and test rigs are
       largely built out of it without anybody machining anything.
     url: https://en.wikipedia.org/wiki/6063_aluminium_alloy
+    # The temper's sheets:
+    #   O    https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-6063-O.pdf
+    #   T1   https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-6063-T1.pdf
+    #   T4   https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-6063-T4.pdf
+    #   T5   https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6063T5 (typical, 1.6 mm), as https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-6063-T5.pdf
+    #   T6   https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-6063-T6.pdf
     density: 2700
-    youngsModulus: 6.89e+10 # Pa, 6063-T5; T5, typical (1.6 mm). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6063T5
-    poissonsRatio: 0.33 # 6063-T5; T5, typical (1.6 mm). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6063T5
-    yieldStrength: 1.45e+8 # Pa, 6063-T5; T5, typical (1.6 mm); typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6063T5
-    thermalConductivity: 209 # W/(m*K), 6063-T5; T5, typical (1.6 mm); at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6063T5
+    youngsModulus: 6.89e+10 # Pa, 6063, every temper (68.9 GPa on every sheet above); average of tension and compression.
+    poissonsRatio: 0.33 # 6063, every temper; the O, T1, T4 and T6 sheets above, and asm.matweb.com's T5 page.
+    yieldStrength: "%pick(temper, ['O', 'T1', 'T4', 'T5', 'T6'], [4.83e+7, 8.96e+7, 8.96e+7, 1.45e+8, 2.14e+8])%" # Pa, 6063; typical (AA), not a specification minimum; each temper's sheet above.
+    thermalConductivity: "%pick(temper, ['O', 'T1', 'T4', 'T5', 'T6'], [218, 193, 200, 209, 200])%" # W/(m*K), 6063; at 77 F (25 C); each temper's sheet above, whose T4 figure is estimated from the other tempers rather than AA's.
     mu: 1.05
+    color: ":aluminium"
     tags:
       - metal
       - aluminium
       - extrusion
       - framing
       - anodising
+  al-6063-t5:
+    type: enrich
+    source: ":al-6063"
+    with: {temper: T5}
   al-6082-t6:
     formal: 6082-T6
     full: Aluminium alloy 6082-T6
@@ -140,38 +301,61 @@ materials:
     yieldStrength: 2.55e+8 # Pa, 6082-T6; T6/T651 plate 6-12.5 mm; SPECIFICATION MINIMUM per BS EN 485-2:2008 (240 MPa min for 12.5-150 mm). https://www.aalco.co.uk/datasheets/Aluminium-Alloy-6082-T6T651-Plate_148.ashx
     thermalConductivity: 180 # W/(m*K), 6082-T6; T6/T651, room temperature. https://www.aalco.co.uk/datasheets/Aluminium-Alloy-6082-T6T651-Plate_148.ashx
     mu: 1.05
+    color: ":aluminium"
     tags:
       - metal
       - aluminium
       - structural
       - weldable
       - heat-treatable
-  al-7075-t6:
-    formal: 7075-T6
-    full: Aluminium alloy 7075-T6
+  al-7075:
+    parameters:
+      temper:
+        type: string
+        enum: [O, T6, T651, T73, T7351]
+        default: T6
+        desc: "The temper (ANSI H35.1): O annealed; T6 solution heat treated and artificially aged, T651 the same stress relieved; T73 and T7351 overaged, for resistance to stress-corrosion cracking at some cost in strength"
+    formal: "7075-%temper%"
+    full: "Aluminium alloy 7075-%temper%"
     desc: |
       The strong one: an Al-Zn alloy that reaches the strength of a mild steel
       at a third of the density, and the reason aircraft fittings, wing spars,
       landing-gear components, competition suspension uprights and highly
       loaded robot arms are cut from it. The price is that it is effectively
       not weldable, is more prone to stress-corrosion cracking than the 5000
-      and 6000 series, and costs several times as much.
+      and 6000 series - which is what the overaged T73 tempers trade strength
+      against - and costs several times as much.
     url: https://en.wikipedia.org/wiki/7075_aluminium_alloy
+    # The temper's sheets:
+    #   O           https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-7075-O.pdf
+    #   T6, T651    https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA7075T6 , as https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-7075-T6-7075-T651.pdf
+    #   T73, T7351  https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-7075-T73-7075-T735x.pdf , whose figures are not marked AA
     density: 2810
-    youngsModulus: 7.17e+10 # Pa, 7075-T6; T6, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA7075T6
-    poissonsRatio: 0.33 # 7075-T6; T6, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA7075T6
-    yieldStrength: 5.03e+8 # Pa, 7075-T6; T6, typical; typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA7075T6
-    thermalConductivity: 130 # W/(m*K), 7075-T6; T6, typical; at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA7075T6
+    youngsModulus: "%pick(temper, ['O', 'T6', 'T651', 'T73', 'T7351'], [7.17e+10, 7.17e+10, 7.17e+10, 7.2e+10, 7.2e+10])%" # Pa, 7075; average of tension and compression; each temper's sheet above.
+    poissonsRatio: 0.33 # 7075, every temper; every sheet above.
+    yieldStrength: "%pick(temper, ['O', 'T6', 'T651', 'T73', 'T7351'], [1.03e+8, 5.03e+8, 5.03e+8, 4.35e+8, 4.35e+8])%" # Pa, 7075; typical, not a specification minimum (AA's for O and T6); each temper's sheet above.
+    thermalConductivity: "%pick(temper, ['O', 'T6', 'T651', 'T73', 'T7351'], [173, 130, 130, 155, 155])%" # W/(m*K), 7075; at 77 F (25 C) where the sheet says; each temper's sheet above.
     mu: 1.05
+    color: ":aluminium"
     tags:
       - metal
       - aluminium
       - aviation
       - high-strength
       - machinable
-  al-2024-t3:
-    formal: 2024-T3
-    full: Aluminium alloy 2024-T3
+  al-7075-t6:
+    type: enrich
+    source: ":al-7075"
+    with: {temper: T6}
+  al-2024:
+    parameters:
+      temper:
+        type: string
+        enum: [O, T3, T351, T361, T4, T81, T86]
+        default: T3
+        desc: "The temper (ANSI H35.1): O annealed; T3 solution heat treated, cold worked and naturally aged, the sheet temper; T351 the same stress relieved (plate); T361 cold worked more; T4 solution heat treated and naturally aged; T81 and T86 cold worked and artificially aged"
+    formal: "2024-%temper%"
+    full: "Aluminium alloy 2024-%temper%"
     desc: |
       The riveted-airframe alloy. An Al-Cu alloy with the fatigue and
       damage-tolerance behaviour a pressurised fuselage skin needs, which is
@@ -180,21 +364,39 @@ materials:
       thin layer of pure aluminium on each face - and it is riveted rather than
       welded.
     url: https://en.wikipedia.org/wiki/2024_aluminium_alloy
+    # The temper's sheets:
+    #   O          https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-2024-O.pdf
+    #   T3         https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA2024T3 (typical, 1.6 mm sheet), as https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-2024-T3.pdf
+    #   T351, T4   https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-2024-T4-2024-T351.pdf
+    #   T361       https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-2024-T361.pdf
+    #   T81        https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-2024-T81.pdf , whose strength is not marked AA
+    #   T86        https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-2024-T86.pdf , whose strength is not marked AA
     density: 2780
-    youngsModulus: 7.31e+10 # Pa, 2024-T3; T3, typical (1.6 mm sheet). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA2024T3
-    poissonsRatio: 0.33 # 2024-T3; T3, typical (1.6 mm sheet). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA2024T3
-    yieldStrength: 3.45e+8 # Pa, 2024-T3; T3, typical (1.6 mm sheet); typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA2024T3
-    thermalConductivity: 121 # W/(m*K), 2024-T3; T3, typical (1.6 mm sheet); at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA2024T3
+    youngsModulus: "%pick(temper, ['O', 'T3', 'T351', 'T361', 'T4', 'T81', 'T86'], [7.31e+10, 7.31e+10, 7.31e+10, 7.31e+10, 7.31e+10, 7.24e+10, 7.24e+10])%" # Pa, 2024; average of tension and compression; each temper's sheet above.
+    poissonsRatio: 0.33 # 2024, every temper; every sheet above.
+    yieldStrength: "%pick(temper, ['O', 'T3', 'T351', 'T361', 'T4', 'T81', 'T86'], [7.58e+7, 3.45e+8, 3.24e+8, 3.93e+8, 3.24e+8, 4.5e+8, 4.4e+8])%" # Pa, 2024; typical, not a specification minimum (AA's but for T81 and T86); each temper's sheet above.
+    thermalConductivity: "%pick(temper, ['O', 'T3', 'T351', 'T361', 'T4', 'T81', 'T86'], [193, 121, 121, 121, 121, 151, 151])%" # W/(m*K), 2024; at 77 F (25 C); each temper's sheet above.
     mu: 1.05
+    color: ":aluminium"
     tags:
       - metal
       - aluminium
       - aviation
       - fatigue-resistant
       - high-strength
-  al-5083-h116:
-    formal: 5083-H116
-    full: Aluminium alloy 5083-H116
+  al-2024-t3:
+    type: enrich
+    source: ":al-2024"
+    with: {temper: T3}
+  al-5083:
+    parameters:
+      temper:
+        type: string
+        enum: [H112, H116, H321]
+        default: H116
+        desc: "The temper (ANSI H35.1): H112 as fabricated, with some strain hardening; H116 and H321 strain hardened and stabilised for marine service"
+    formal: "5083-%temper%"
+    full: "Aluminium alloy 5083-%temper%"
     desc: |
       The strongest of the non-heat-treatable alloys, and the one that keeps
       its strength where it is welded. Marine hulls, pressure vessels,
@@ -202,12 +404,16 @@ materials:
       wherever a welded aluminium structure has to be as strong as the sheet it
       was made from.
     url: https://en.wikipedia.org/wiki/5083_aluminium_alloy
+    # The temper's sheets:
+    #   H112        https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-5083-H112.pdf , whose strength is not marked AA
+    #   H116, H321  https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5083H116 , as https://www.aerospacemetals.com/wp-content/uploads/2023/06/Aluminum-5083-H116-5083-H321.pdf
     density: 2660
-    youngsModulus: 7.03e+10 # Pa, 5083-H116; H116, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5083H116
-    poissonsRatio: 0.33 # 5083-H116; H116, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5083H116
-    yieldStrength: 2.28e+8 # Pa, 5083-H116; H116, typical; typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5083H116
-    thermalConductivity: 117 # W/(m*K), 5083-H116; H116, typical; at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5083H116
+    youngsModulus: 7.03e+10 # Pa, 5083, every temper; in tension (70.3 GPa on both sheets above).
+    poissonsRatio: 0.33 # 5083, every temper; both sheets above, which give it as estimated from similar alloys.
+    yieldStrength: "%pick(temper, ['H112', 'H116', 'H321'], [1.9e+8, 2.28e+8, 2.28e+8])%" # Pa, 5083; typical, not a specification minimum (AA's for H116/H321); each temper's sheet above.
+    thermalConductivity: 117 # W/(m*K), 5083, every temper; both sheets above.
     mu: 1.05
+    color: ":aluminium"
     tags:
       - metal
       - aluminium
@@ -215,6 +421,10 @@ materials:
       - corrosion-resistant
       - marine
       - cryogenic
+  al-5083-h116:
+    type: enrich
+    source: ":al-5083"
+    with: {temper: H116}
   al-a356-t6:
     formal: A356-T6
     full: Aluminium casting alloy A356-T6
@@ -230,6 +440,7 @@ materials:
     poissonsRatio: 0.33 # A356.0-T6; T6 (cast). secondary: a search-result excerpt summarising a MatWeb-derived A356.0-T6 sheet and makeitfrom.com/material-properties/356.0-T6-Cast-Aluminum
     thermalConductivity: 151 # W/(m*K), A356.0-T6; T6, room temperature. https://xometry.asia/wp-content/uploads/2025/07/1774070994-A356-Datasheet.pdf
     mu: 1.05
+    color: ":aluminium"
     tags:
       - metal
       - aluminium
@@ -252,6 +463,7 @@ materials:
     yieldStrength: 1.59e+8 # Pa, A380.0-F; F (as die cast); typical. secondary: a search-result excerpt citing Dynacast die-cast metal properties table (A380 0.2% yield 23 ksi) and a NADCA-derived DTIC report (23 ksi); the Dynacast page itself was not read
     thermalConductivity: 96.2 # W/(m*K), A380.0-F; F, room temperature. secondary: search-result excerpts quoting die-casting tables listing 55.6 BTU/(ft hr F) = 96.2 W/(m K) (NADCA value); patent text 'A380 ... 96.2 W/(m*k) in the literature'
     mu: 1.05
+    color: ":aluminium"
     tags:
       - metal
       - aluminium
@@ -262,6 +474,15 @@ materials:
   #
   # Carbon and alloy steel
   #
+  # 4130, 4140 and 4340 take their heat treatment as two parameters: the
+  # condition, and - quenched and tempered - the tempering temperature. The
+  # quenched-and-tempered yield is interpolated through the tempering table
+  # Lucefin publishes for the European steel it gives as each one's AISI
+  # equivalent (25CrMo4 for 4130, 42CrMo4 for 4140, 34CrNiMo6 for 4340),
+  # measured on its own test bars and named on each value; a larger section
+  # hardens less deeply and comes out somewhat weaker. Modulus, Poisson's ratio
+  # and conductivity are taken for every condition, which is an approximation:
+  # heat treatment moves them far less than it moves the strength.
   steel-1018:
     formal: AISI 1018
     full: Low-carbon steel AISI 1018
@@ -277,6 +498,7 @@ materials:
     yieldStrength: 3.7e+8 # Pa, AISI 1018; cold drawn (this catalogue names no condition: cold-drawn bar, the usual 1018 stock, is assumed). https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Carbon-Steel-Grade-1018-Data-Sheet_Elgin.pdf
     thermalConductivity: 51.9 # W/(m*K), AISI 1018; room temperature. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Carbon-Steel-Grade-1018-Data-Sheet_Elgin.pdf
     mu: 0.6
+    color: ":steel"
     tags:
       - metal
       - steel
@@ -297,6 +519,7 @@ materials:
     yieldStrength: 5.17e+8 # Pa, AISI 1045; cold finished (cold drawn) bar, 'as supplied'; typical. https://www.myalro.com/gradeinfo/Metals_Gridpt.aspx?gp=0004
     thermalConductivity: 51.9 # W/(m*K), AISI 1045; room temperature (temperature not stated by source). https://kmac-distribution.com/technical/1045-carbon-steel.htm
     mu: 0.6
+    color: ":steel"
     tags:
       - metal
       - steel
@@ -324,20 +547,36 @@ materials:
       - weldable
       - low-cost
   steel-4130:
+    parameters:
+      condition:
+        type: string
+        enum: [normalized, quenched-and-tempered]
+        default: normalized
+        desc: "The heat treatment: normalized - air cooled from 870 C, the condition 4130 tube is sold and welded in - or quenched and tempered at 'tempering'"
+      tempering:
+        type: float
+        default: 600
+        min: 500
+        max: 650
+        desc: "Tempering temperature in C, after water quenching from 840 C: read when 'condition' is quenched-and-tempered, and the range Lucefin's 25CrMo4 table covers"
     formal: AISI 4130
     full: Chromium-molybdenum steel AISI 4130
     desc: |
       Chromoly: the tube an aircraft fuselage, a roll cage, a motorcycle frame
       or a race-car chassis is welded from. High strength for its weight, and -
       unusually for a strong alloy steel - it TIG welds thin wall without
-      needing heat treatment afterwards for most airframe work.
+      needing heat treatment afterwards for most airframe work. Bar is
+      quenched and tempered where the strength has to be higher.
     url: https://en.wikipedia.org/wiki/41xx_steel
     density: 7850
-    youngsModulus: 2.05e+11 # Pa, AISI 4130; normalized 870 C, 25 mm round. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r
-    poissonsRatio: 0.29 # AISI 4130; normalized. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r
-    yieldStrength: 4.35e+8 # Pa, AISI 4130; normalized at 870 C (1600 F), 25 mm round - the usual condition (N) of 4130 aircraft/chassis tube; typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r
-    thermalConductivity: 42.7 # W/(m*K), AISI 4130; at 100 C. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r
+    youngsModulus: 2.05e+11 # Pa, AISI 4130; normalized 870 C, 25 mm round; taken for every condition. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r
+    poissonsRatio: 0.29 # AISI 4130; normalized; taken for every condition. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r
+    # Normalized: 435 MPa, AISI 4130 normalized at 870 C (1600 F), 25 mm round, typical, https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r .
+    # Quenched and tempered: Rp0.2 of 25CrMo4 (1.7218, which Lucefin gives as AISI 4130's equivalent) after quenching at 840 C in water and tempering at 500, 550, 600 and 650 C - 770, 680, 600 and 540 N/mm^2 - from Lucefin's tempering table, https://www.lucefin.com/wp-content/files_mf/152336974825CrMo4.pdf ; interpolated between them.
+    yieldStrength: "%pick(condition, ['normalized', 'quenched-and-tempered'], [4.35e+8, interpolate(tempering, [500, 550, 600, 650], [7.7e+8, 6.8e+8, 6.0e+8, 5.4e+8])])%" # Pa, typical; the two sources above.
+    thermalConductivity: 42.7 # W/(m*K), AISI 4130; at 100 C; taken for every condition. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r
     mu: 0.6
+    color: ":steel"
     tags:
       - metal
       - steel
@@ -346,27 +585,98 @@ materials:
       - high-strength
       - weldable
   steel-4140:
+    parameters:
+      condition:
+        type: string
+        enum: [normalized, quenched-and-tempered]
+        default: normalized
+        desc: "The heat treatment: normalized - air cooled from 870 C, about 32 HRC, comparable to the pre-hardened bar 4140 is commonly bought as - or quenched and tempered at 'tempering'"
+      tempering:
+        type: float
+        default: 600
+        min: 100
+        max: 700
+        desc: "Tempering temperature in C, after oil quenching from 850 C: read when 'condition' is quenched-and-tempered, and the range Lucefin's 42CrMo4 table covers"
     formal: AISI 4140
     full: Chromium-molybdenum steel AISI 4140
     desc: |
       The through-hardening alloy steel of machine building: gear blanks,
       drive and output shafts, suspension and steering components, tooling and
-      dies. Bought pre-hardened and tempered as often as it is heat treated
-      after machining.
+      dies, and the high-strength bolts and screws of ISO 898-1 (see
+      steel-4140-iso898). Bought pre-hardened and tempered as often as it is
+      heat treated after machining.
     url: https://en.wikipedia.org/wiki/41xx_steel
     density: 7850
-    youngsModulus: 2.05e+11 # Pa, AISI 4140; normalized. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf
-    poissonsRatio: 0.29 # AISI 4140; normalized. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf
-    yieldStrength: 6.55e+8 # Pa, AISI 4140; normalized 870 C, 25 mm round, 302 HB (~32 HRC) - comparable to the 28-32 HRC 'pre-hardened' (4140 HT) bar the catalogue describes; typical. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf
-    thermalConductivity: 42.6 # W/(m*K), AISI 4140; at 100 C. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf
+    youngsModulus: 2.05e+11 # Pa, AISI 4140; normalized; taken for every condition. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf
+    poissonsRatio: 0.29 # AISI 4140; normalized; taken for every condition. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf
+    # Normalized: 655 MPa, AISI 4140 normalized 870 C, 25 mm round, 302 HB (~32 HRC), typical, https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf .
+    # Quenched and tempered: Rp0.2 of 42CrMo4 (1.7225, which Lucefin gives as AISI 4140's equivalent) on 10 mm rounds quenched at 850 C in oil and tempered every 50 C from 100 to 700 C - 1520, 1600, 1620, 1590, 1560, 1510, 1440, 1340, 1230, 1110, 1000, 870 and 710 N/mm^2 - from Lucefin's tempering table, https://www.lucefin.com/wp-content/files_mf/152353604042CrMo4.pdf ; interpolated between them.
+    yieldStrength: "%pick(condition, ['normalized', 'quenched-and-tempered'], [6.55e+8, interpolate(tempering, [100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700], [1.52e+9, 1.6e+9, 1.62e+9, 1.59e+9, 1.56e+9, 1.51e+9, 1.44e+9, 1.34e+9, 1.23e+9, 1.11e+9, 1.0e+9, 8.7e+8, 7.1e+8])])%" # Pa, typical; the two sources above.
+    thermalConductivity: 42.6 # W/(m*K), AISI 4140; at 100 C; taken for every condition. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf
     mu: 0.6
+    color: ":steel"
     tags:
       - metal
       - steel
       - heat-treatable
       - high-strength
       - automotive
+  # What a bolt, screw or stud of an ISO 898-1 property class is made of when
+  # it is made of 4140, by its class. ISO 898-1 asks of every class from 8.8 up
+  # a steel quenched and tempered at 425 C or more (Table 2), and of each a
+  # minimum 0.2 % proof strength and tensile strength (Table 3); its tempering
+  # temperature here is the highest at which 4140 - Lucefin's 42CrMo4 table,
+  # as in steel-4140 - still meets both: 700, 690, 623 and 550 C for 8.8,
+  # 9.8, 10.9 and 12.9. Its yield is the class's minimum Rp0.2, which is what a
+  # bolted joint is designed to.
+  steel-4140-iso898:
+    type: enrich
+    source: ":steel-4140"
+    parameters:
+      propertyClass:
+        type: float
+        default: 10.9
+        min: 8.8
+        max: 12.9
+        desc: "ISO 898-1 property class: 8.8, 9.8, 10.9 or 12.9 (8.8 as for diameters up to 16 mm)"
+    # The class's minima, ISO 898-1:2013 Table 3, as Wurth Industrie reproduces
+    # its Tables 2 and 3 (https://prueflabor.wuerth-industrie.com/web/media/en/pictures/wuerthindustrie/technikportal/dinokapitel/Kapitel_01_DINO_techn_Teil.pdf):
+    # Rp0.2 640 (d <= 16 mm), 720, 940 and 1100 MPa; Rm 800, 900, 1040 and 1220
+    # MPa. Each is looked up in Lucefin's 42CrMo4 table backwards (the strengths
+    # in increasing order against the tempering temperatures that give them,
+    # from 700 down to 200 C, interpolated), the lower temperature of the two
+    # kept, and never below ISO 898-1's 425 C.
+    with:
+      condition: quenched-and-tempered
+      tempering: "%round(max(425, min(interpolate(pick(propertyClass, [8.8, 9.8, 10.9, 12.9], [6.4e+8, 7.2e+8, 9.4e+8, 1.1e+9]), [7.1e+8, 8.7e+8, 1.0e+9, 1.11e+9, 1.23e+9, 1.34e+9, 1.44e+9, 1.51e+9, 1.56e+9, 1.59e+9, 1.62e+9], [700, 650, 600, 550, 500, 450, 400, 350, 300, 250, 200]), interpolate(pick(propertyClass, [8.8, 9.8, 10.9, 12.9], [8.0e+8, 9.0e+8, 1.04e+9, 1.22e+9]), [8.8e+8, 9.8e+8, 1.1e+9, 1.22e+9, 1.35e+9, 1.48e+9, 1.59e+9, 1.7e+9, 1.8e+9, 1.91e+9, 2.03e+9], [700, 650, 600, 550, 500, 450, 400, 350, 300, 250, 200]))))%"
+    formal: "AISI 4140, ISO 898-1 class %propertyClass%"
+    full: "Chromium-molybdenum steel AISI 4140, quenched and tempered to ISO 898-1 property class %propertyClass%"
+    desc: |
+      One of the steels a high-strength bolt, screw or stud is made of: 4140
+      quenched and tempered to an ISO 898-1 property class - 10.9 by default,
+      or 8.8, 9.8 or 12.9. Its yield strength is the class's minimum, which is
+      what a bolted joint is designed to.
+    url: https://en.wikipedia.org/wiki/ISO_898
+    yieldStrength: "%pick(propertyClass, [8.8, 9.8, 10.9, 12.9], [6.4e+8, 7.2e+8, 9.4e+8, 1.1e+9])%" # Pa; SPECIFICATION MINIMUM Rp0.2 of the property class, ISO 898-1:2013 Table 3, as Wurth Industrie reproduces it (above).
+    tags:
+      - metal
+      - steel
+      - fastener
+      - heat-treatable
+      - high-strength
   steel-4340:
+    parameters:
+      condition:
+        type: string
+        enum: [quenched-and-tempered]
+        default: quenched-and-tempered
+        desc: "The heat treatment: quenched and tempered at 'tempering', the condition 4340 is used in (the only one this catalogue has data for)"
+      tempering:
+        type: float
+        default: 600
+        min: 100
+        max: 700
+        desc: "Tempering temperature in C, after oil quenching from 850 C: the range Lucefin's 34CrNiMo6 table covers. 600 C, about 34 HRC in that table, is in the middle of the 540-660 C Lucefin gives for tempering it"
     formal: AISI 4340
     full: Nickel-chromium-molybdenum steel AISI 4340
     desc: |
@@ -378,14 +688,43 @@ materials:
     density: 7850
     youngsModulus: 2.05e+11 # Pa, AISI 4340; normalized / Q&T (insensitive). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=M434AE
     poissonsRatio: 0.29 # AISI 4340; oil quenched and tempered. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m434ap
+    # Rp0.2 of 34CrNiMo6 (1.6582, which Lucefin gives as AISI 4340's equivalent) on 60 mm rounds quenched at 850 C in oil and tempered at 100, 200, 300, 400, 500, 550, 600, 650 and 700 C - 1450, 1480, 1450, 1350, 1180, 980, 950, 700 and 680 N/mm^2 - from Lucefin's tempering table, https://www.lucefin.com/wp-content/files_mf/152353526334CrNiMo6.pdf ; interpolated between them.
+    yieldStrength: "%pick(condition, ['quenched-and-tempered'], [interpolate(tempering, [100, 200, 300, 400, 500, 550, 600, 650, 700], [1.45e+9, 1.48e+9, 1.45e+9, 1.35e+9, 1.18e+9, 9.8e+8, 9.5e+8, 7.0e+8, 6.8e+8])])%" # Pa, typical; the table above.
     thermalConductivity: 44.5 # W/(m*K), AISI 4340; room temperature. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=M434AE
     mu: 0.6
+    color: ":steel"
     tags:
       - metal
       - steel
       - aviation
       - high-strength
       - tough
+  steel-52100:
+    formal: AISI 52100
+    full: Bearing steel AISI 52100 (100Cr6), through hardened
+    desc: |
+      The through-hardening bearing steel: the balls, rollers and rings of
+      rolling bearings, and ball screws, ball bushings, valves and measuring
+      instruments. A high-carbon chromium steel hardened to 62 HRC or more, at
+      which it is very hard and wear resistant and has almost no ductility -
+      so it is machined soft and ground after hardening. AISI 52100, 100Cr6
+      (1.3505), GCr15, SUJ2.
+    url: https://en.wikipedia.org/wiki/SAE_52100_steel
+    density: 7810 # kg/m^3, 100Cr6 (1.3505). https://www.lucefin.com/wp-content/files_mf/1523536908100Cr6.pdf
+    youngsModulus: 2.0e+11 # Pa, AISI 52100 / 1.3505; hardened balls, 61.8-67 HRC (Lucefin gives 210 GPa, condition not stated). https://www.skt-gmbh.de/wp-content/uploads/2025/09/Datasheet_balls_1.3505.pdf
+    poissonsRatio: 0.3 # 100Cr6 (1.3505), within SKT's 0.27-0.30 for hardened balls. https://www.lucefin.com/wp-content/files_mf/1523536908100Cr6.pdf
+    yieldStrength: 1.0e+9 # Pa, AISI 52100 / 1.3505; hardened balls, 61.8-67 HRC; LOWER BOUND of SKT's 1000-1500 N/mm^2. https://www.skt-gmbh.de/wp-content/uploads/2025/09/Datasheet_balls_1.3505.pdf
+    # No conductivity: SKT gives 25-30 W/(m*K) for hardened balls and Lucefin
+    # 46.6 W/(m*K) in a condition it does not state, so it is not known well
+    # enough for the hardened steel to state.
+    mu: 0.6
+    color: ":bearing-steel"
+    tags:
+      - metal
+      - steel
+      - bearing
+      - wear-resistant
+      - high-hardness
   steel-dp600:
     formal: DP600
     full: Dual-phase advanced high-strength steel DP600
@@ -448,6 +787,7 @@ materials:
     yieldStrength: 2.4e+8 # Pa, AISI 303; annealed bar, tested at room temperature; typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MQ303G
     thermalConductivity: 16.2 # W/(m*K), AISI 303; at 100 C. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MQ303G
     mu: 0.7
+    color: ":stainless-steel"
     tags:
       - metal
       - stainless
@@ -469,6 +809,7 @@ materials:
     yieldStrength: 2.9e+8 # Pa, AISI 304; annealed sheet/strip; typical. https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10510/file/CLF_ProductData_304-304LSS_052021.pdf
     thermalConductivity: 16.2 # W/(m*K), AISI 304; at 100 C (212 F). https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10510/file/CLF_ProductData_304-304LSS_052021.pdf
     mu: 0.7
+    color: ":stainless-steel"
     tags:
       - metal
       - stainless
@@ -489,6 +830,7 @@ materials:
     youngsModulus: 1.93e+11 # Pa, AISI 316L; annealed. https://d1io3yog0oux5.cloudfront.net/_464c1f648dd1e0c96c45d68cdce1cf31/clevelandcliffs/db/1190/10513/file/CLF_ProductData_316-316LSS_052021.pdf
     thermalConductivity: 16.2 # W/(m*K), AISI 316L; at 100 C (212 F). https://d1io3yog0oux5.cloudfront.net/_464c1f648dd1e0c96c45d68cdce1cf31/clevelandcliffs/db/1190/10513/file/CLF_ProductData_316-316LSS_052021.pdf
     mu: 0.7
+    color: ":stainless-steel"
     tags:
       - metal
       - stainless
@@ -497,21 +839,29 @@ materials:
       - weldable
       - medical
   ss-17-4ph:
+    parameters:
+      condition:
+        type: string
+        enum: [A, H900, H925, H1025, H1075, H1150, H1150-M]
+        default: H900
+        desc: "The heat treatment, as Cleveland-Cliffs names it: A solution treated at 1038 C (as supplied); H900 to H1150 then aged 1-4 h at that temperature in F (482-621 C), stronger the lower it is; H1150-M double aged, 760 C then 621 C"
     formal: 17-4 PH
     full: Precipitation-hardening stainless steel 17-4 PH
     desc: |
       Stainless with the strength of an alloy steel, reached by a single low
       temperature ageing treatment that distorts almost nothing - so a part can
-      be machined to size soft and hardened afterwards. Aerospace fittings,
-      valve and pump shafts, injection mould inserts, and a common printed
-      metal alloy.
+      be machined to size as supplied (condition A) and hardened afterwards:
+      H900 the strongest, H1025 to H1150 more ductile and far more resistant to
+      stress-corrosion cracking. Aerospace fittings, valve and pump shafts,
+      injection mould inserts, and a common printed metal alloy.
     url: https://en.wikipedia.org/wiki/Precipitation_hardening
     density: 7800
-    youngsModulus: 1.97e+11 # Pa, 17-4 PH (UNS S17400); H900. https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10503/file/CLF_ProductData_17-4-PHSS_052021.pdf
+    youngsModulus: 1.97e+11 # Pa, 17-4 PH (UNS S17400); H900; taken for every condition, as ATI gives one modulus for all of them (https://www.atimaterials.com/Products/Documents/datasheets/stainless-specialty-steel/precipitationhardening/ati_17-4_tds_en_v2.pdf). https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10503/file/CLF_ProductData_17-4-PHSS_052021.pdf
     poissonsRatio: 0.272 # 17-4 PH (UNS S17400); all conditions. https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10503/file/CLF_ProductData_17-4-PHSS_052021.pdf
-    yieldStrength: 1.275e+9 # Pa, 17-4 PH (UNS S17400); H900 (aged 482 C / 900 F, 1 h); typical, transverse. https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10503/file/CLF_ProductData_17-4-PHSS_052021.pdf
-    thermalConductivity: 17.8 # W/(m*K), 17-4 PH (UNS S17400); H900, mean 21-100 C. https://www.atimaterials.com/Products/Documents/datasheets/stainless-specialty-steel/precipitationhardening/ati_17-4_tds_en_v2.pdf
+    yieldStrength: "%pick(condition, ['A', 'H900', 'H925', 'H1025', 'H1075', 'H1150', 'H1150-M'], [7.93e+8, 1.275e+9, 1.207e+9, 1.138e+9, 1.103e+9, 8.96e+8, 7.65e+8])%" # Pa, 17-4 PH (UNS S17400); 0.2 % yield, typical, transverse; the condition's column of Cleveland-Cliffs' Table 2. https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10503/file/CLF_ProductData_17-4-PHSS_052021.pdf
+    thermalConductivity: 17.8 # W/(m*K), 17-4 PH (UNS S17400); H900, mean 21-100 C; taken for every condition. https://www.atimaterials.com/Products/Documents/datasheets/stainless-specialty-steel/precipitationhardening/ati_17-4_tds_en_v2.pdf
     mu: 0.6
+    color: ":stainless-steel"
     tags:
       - metal
       - stainless
@@ -539,6 +889,7 @@ materials:
     poissonsRatio: 0.342 # Ti-6Al-4V (Grade 5); annealed. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtp641
     yieldStrength: 8.8e+8 # Pa, Ti-6Al-4V (Grade 5); annealed; typical (Allvac data). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtp641
     thermalConductivity: 6.7 # W/(m*K), Ti-6Al-4V (Grade 5); annealed, room temperature. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtp641
+    color: ":titanium"
     tags:
       - metal
       - titanium
@@ -547,19 +898,36 @@ materials:
       - lightweight
       - corrosion-resistant
       - biocompatible
-  ti-grade-2:
-    formal: Ti Grade 2
-    full: Commercially pure titanium, Grade 2
+  # Unalloyed titanium by its ASTM grade. Every value is from the data sheet
+  # Aerospace Specification Metals publishes for the grade, annealed - the
+  # data its pages on asm.matweb.com show, which this catalogue cited for
+  # Grade 2 before it had grades:
+  #   1  https://www.aerospacemetals.com/wp-content/uploads/2023/07/Titanium-Grade-1-Annealed-Data-Sheet.pdf
+  #   2  https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtu021 (annealed 2 h at 700 C), as https://www.aerospacemetals.com/wp-content/uploads/2023/07/Titanium-Grade-2-Annealed-Data-Sheet.pdf
+  #   3  https://www.aerospacemetals.com/wp-content/uploads/2023/07/Titanium-Grade-3-Annealed-Data-Sheet.pdf
+  #   4  https://www.aerospacemetals.com/wp-content/uploads/2023/07/Titanium-Grade-4-Annealed-Data-Sheet.pdf
+  ti-cp:
+    parameters:
+      grade:
+        type: int
+        default: 2
+        min: 1
+        max: 4
+        desc: "ASTM grade of unalloyed titanium, 1 to 4: the higher the grade, the more oxygen and iron in it, and the stronger and less formable it is"
+    formal: "Ti Grade %grade%"
+    full: "Commercially pure titanium, Grade %grade%"
     desc: |
       Unalloyed titanium: much weaker than Grade 5 and much easier to form and
       weld, with the same corrosion immunity. Sheet, tube, heat exchangers,
-      chemical and marine hardware, and surgical instruments.
+      chemical and marine hardware, and surgical instruments. Grade 1 is the
+      softest and most formable, Grade 4 the strongest.
     url: https://en.wikipedia.org/wiki/Titanium
-    density: 4510
-    youngsModulus: 1.02e+11 # Pa, CP titanium Grade 2; annealed 2 h at 700 C. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtu021
-    poissonsRatio: 0.34 # CP titanium Grade 2; annealed. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtu021
-    yieldStrength: 3.4e+8 # Pa, CP titanium Grade 2; annealed 2 h at 700 C; typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtu021
-    thermalConductivity: 16.4 # W/(m*K), CP titanium Grade 2; annealed, room temperature. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtu021
+    density: "%pick(grade, [1, 2, 3, 4], [4510, 4510, 4500, 4510])%" # kg/m^3; each grade's sheet above.
+    youngsModulus: "%pick(grade, [1, 2, 3, 4], [1.0e+11, 1.02e+11, 1.04e+11, 1.05e+11])%" # Pa; in tension; annealed (Grade 4's sheet: heat treatment unspecified); each grade's sheet above.
+    poissonsRatio: 0.34 # every grade; annealed; each grade's sheet above.
+    yieldStrength: "%pick(grade, [1, 2, 3, 4], [2.4e+8, 3.4e+8, 4.5e+8, 5.9e+8])%" # Pa; annealed; typical; each grade's sheet above.
+    thermalConductivity: "%pick(grade, [1, 2, 3, 4], [16, 16.4, 16.4, 16.9])%" # W/(m*K); annealed, room temperature; each grade's sheet above.
+    color: ":titanium"
     tags:
       - metal
       - titanium
@@ -567,6 +935,10 @@ materials:
       - weldable
       - corrosion-resistant
       - biocompatible
+  ti-grade-2:
+    type: enrich
+    source: ":ti-cp"
+    with: {grade: 2}
 
   #
   # Magnesium
@@ -615,23 +987,91 @@ materials:
   #
   # Copper and copper alloys
   #
+  # The wrought coppers and brasses are the Copper Development Association's
+  # standard alloys, and every value of theirs below is from the CDA's page for
+  # the alloy, https://alloys.copper.org/alloy/<alloy> (C11000, C21000,
+  # C22000, C23000, C24000, C26000, C27000, C28000, C50500, C51000, C52100,
+  # C52400), converted to SI: density from the specific gravity, modulus from
+  # ksi (x 6.894757e6), conductivity from Btu/(ft*h*F) at 68 F (x 1.730735). A
+  # yield strength there is at 0.5 % extension under load, CDA's measure, and
+  # not a 0.2 % offset.
   cu-c110:
+    parameters:
+      temper:
+        type: string
+        enum: [OS050, OS025, H00, H01, H04, H08, H10]
+        default: OS025
+        desc: "The temper (ASTM B601): OS050 and OS025 annealed, to a 0.050 or 0.025 mm grain; H00, H01, H04, H08 and H10 cold rolled eighth hard, quarter hard, hard, spring and extra spring"
     formal: C110
     full: Electrolytic tough pitch copper C110
     desc: |
       Copper as an engineering material rather than as an alloy: busbars,
       terminals, motor windings, heat spreaders, cold plates and induction
       coils. Nothing affordable conducts electricity or heat better. Soft,
-      heavy, and it work hardens as it is bent.
+      heavy, and it work hardens as it is bent - annealed is the soft end of
+      its tempers, H10 the hard one.
     url: https://en.wikipedia.org/wiki/Copper
     density: 8890
     youngsModulus: 1.17e+11 # Pa, C11000 (Cu-ETP); any temper. https://alloys.copper.org/alloy/C11000?alloy=C11000
-    thermalConductivity: 391 # W/(m*K), C11000 (Cu-ETP); 68 F (20 C), annealed. https://alloys.copper.org/alloy/C11000?alloy=C11000
+    yieldStrength: "%pick(temper, ['OS050', 'OS025', 'H00', 'H01', 'H04', 'H08', 'H10'], [6.89e+7, 7.58e+7, 1.93e+8, 2.07e+8, 3.1e+8, 3.45e+8, 3.65e+8])%" # Pa, C11000 (Cu-ETP); flat products, typical, at 0.5 % extension under load; the temper's row of CDA's table, which states no yield for half hard (H02). https://alloys.copper.org/alloy/C11000
+    thermalConductivity: 391 # W/(m*K), C11000 (Cu-ETP); 68 F (20 C), annealed; taken for every temper. https://alloys.copper.org/alloy/C11000?alloy=C11000
+    color: ":copper"
     tags:
       - metal
       - copper
       - conductive
       - thermally-conductive
+  # Brass by its zinc content, through the CDA's binary copper-zinc alloys at
+  # their nominal zinc: 0.05 C21000 (gilding metal), 0.10 C22000 (commercial
+  # bronze), 0.15 C23000 (red brass), 0.20 C24000 (low brass), 0.30 C26000
+  # (cartridge brass), 0.35 C27000 (yellow brass), 0.40 C28000 (Muntz metal);
+  # interpolated between them. Lead is not a parameter: what it buys is how the
+  # brass machines, which no field here states, and otherwise free-machining
+  # C36000 is within a per cent of unleaded C27000 in density and conductivity
+  # (7 in modulus) - so brass-c360 below keeps the values of its own.
+  brass:
+    parameters:
+      zinc:
+        type: float
+        default: 0.3
+        min: 0.05
+        max: 0.4
+        desc: "Zinc, mass fraction, 0.05 to 0.4: 0.3 is cartridge brass (C26000), the default; the rest copper"
+    formal: "CuZn%round(zinc * 100)%"
+    full: "Brass CuZn%round(zinc * 100)% (copper-zinc alloy)"
+    desc: |
+      Copper and zinc and nothing else of note, from the gilding metal of
+      medals, emblems and bullet jackets at 5 per cent zinc through cartridge
+      brass at 30 - ammunition cases, radiator tanks, lamp fixtures, eyelets -
+      to Muntz metal at 40, which is forged hot rather than formed cold. The
+      more zinc, the yellower, cheaper and stronger it is, and the worse it
+      conducts heat.
+    url: https://en.wikipedia.org/wiki/Brass
+    density: "%interpolate(zinc, [0.05, 0.1, 0.15, 0.2, 0.3, 0.35, 0.4], [8860, 8800, 8750, 8670, 8530, 8470, 8390])%" # kg/m^3; CDA, each alloy above; interpolated.
+    youngsModulus: "%interpolate(zinc, [0.05, 0.1, 0.15, 0.2, 0.3, 0.35, 0.4], [1.17e+11, 1.17e+11, 1.17e+11, 1.1e+11, 1.1e+11, 1.03e+11, 1.03e+11])%" # Pa, in tension; CDA, each alloy above (17000, 16000 and 15000 ksi); interpolated.
+    yieldStrength: "%interpolate(zinc, [0.1, 0.15, 0.2, 0.3, 0.35, 0.4], [9.65e+7, 1.1e+8, 1.17e+8, 1.31e+8, 1.31e+8, 1.45e+8])%" # Pa, annealed, typical, at 0.5 % extension under load; CDA, flat products annealed to a 0.025 mm grain (OS025: 14, 16, 17, 19 and 19 ksi) and C28000 annealed (O61, 21 ksi); interpolated. C21000 has no OS025 row, so below 0.10 zinc it is C22000's.
+    thermalConductivity: "%interpolate(zinc, [0.05, 0.1, 0.15, 0.2, 0.3, 0.35, 0.4], [234, 189, 159, 140, 121, 116, 123])%" # W/(m*K), 68 F (20 C); CDA, each alloy above (135, 109, 92, 81, 70, 67 and 71 Btu/(ft*h*F)); interpolated.
+    color: ":brass;zinc=%zinc%"
+    tags:
+      - metal
+      - copper
+      - brass
+      - formable
+      - corrosion-resistant
+  brass-c280:
+    type: enrich
+    source: ":brass"
+    with: {zinc: 0.4}
+    formal: C280
+    full: Muntz metal C280 (CuZn40)
+    desc: |
+      Muntz metal, 60/40 brass: the cheapest and strongest of the plain
+      brasses, forged hot rather than formed cold. Condenser plates and tube,
+      valve stems, large nuts and bolts, architectural trim and hardware;
+      CuZn40 (CW509L) is its European counterpart and GB/T 5231 H59 its
+      Chinese one.
+    url: https://en.wikipedia.org/wiki/Muntz_metal
+    poissonsRatio: 0.34 # CuZn40 (CW509L); room temperature reference value (CDA states none). https://www.wieland.com/de/content/download/9959/file/Z20_RP_EN.pdf
   brass-c360:
     formal: C360
     full: Free-machining brass C360
@@ -645,6 +1085,7 @@ materials:
     youngsModulus: 1.02e+11 # Pa, C36000 (CuZn36Pb3, CW603N); room temperature reference value. https://www.wieland.com/de/content/download/9839/file/Z23_EX_EN.pdf
     yieldStrength: 2.0e+8 # Pa, C36000 (CuZn36Pb3, CW603N); rod R400 (EN 12164), 2-25 mm; SPECIFICATION MINIMUM Rp0.2. https://www.wieland.com/de/content/download/9839/file/Z23_EX_EN.pdf
     thermalConductivity: 100 # W/(m*K), C36000 (CuZn36Pb3, CW603N); room temperature reference value. https://www.wieland.com/de/content/download/9839/file/Z23_EX_EN.pdf
+    color: ":brass;zinc=0.355" # C36000's nominal zinc: 60-63 copper, 2.5-3.0 lead, the rest zinc (CDA).
     tags:
       - metal
       - copper
@@ -664,12 +1105,47 @@ materials:
     youngsModulus: 1.0e+11 # Pa, C93200 (SAE 660); continuous cast. https://concast.com/c93200.php
     yieldStrength: 1.38e+8 # Pa, C93200 (SAE 660); continuous cast; SPECIFICATION MINIMUM (ASTM B505), measured at 0.5% extension under load, not 0.2% offset. https://concast.com/c93200.php
     thermalConductivity: 58.2 # W/(m*K), C93200 (SAE 660); 20 C. https://concast.com/c93200.php
+    color: ":bronze"
     tags:
       - metal
       - copper
       - bearing
       - wear-resistant
       - machinable
+  # Phosphor bronze by its tin content, through the CDA's wrought copper-tin
+  # alloys at their nominal tin: 0.0125 C50500, 0.05 C51000, 0.08 C52100, 0.10
+  # C52400; interpolated between them. Conductivity falls steeply with the
+  # first few per cent of tin, so between C50500 and C51000 the line is a
+  # rough guide.
+  bronze-phosphor:
+    parameters:
+      tin:
+        type: float
+        default: 0.05
+        min: 0.0125
+        max: 0.1
+        desc: "Tin, mass fraction, 0.0125 to 0.1: 0.05 is C51000, the common one and the default; the rest copper, with a few hundredths of a per cent of phosphorus"
+    formal: "CuSn%round(tin * 100)%"
+    full: "Phosphor bronze CuSn%round(tin * 100)%"
+    desc: |
+      Copper with tin and a trace of phosphorus: springs, electrical
+      connectors and contact blades, diaphragms and Bourdon tubes, sleeve
+      bushings, fasteners and bridge bearing plates. Stronger and springier
+      than brass, with a high endurance limit, and a much poorer conductor
+      than copper; the more tin, the stronger.
+    url: https://en.wikipedia.org/wiki/Phosphor_bronze
+    density: "%interpolate(tin, [0.0125, 0.05, 0.08, 0.1], [8890, 8860, 8800, 8780])%" # kg/m^3; CDA, each alloy above; interpolated.
+    youngsModulus: "%interpolate(tin, [0.0125, 0.05, 0.08, 0.1], [1.17e+11, 1.1e+11, 1.1e+11, 1.1e+11])%" # Pa, in tension; CDA, each alloy above (17000 and 16000 ksi); interpolated.
+    yieldStrength: "%interpolate(tin, [0.0125, 0.05, 0.08, 0.1], [9.65e+7, 1.45e+8, 1.65e+8, 1.93e+8])%" # Pa, annealed, typical, at 0.5 % extension under load; CDA, flat products annealed to a 0.025 mm grain (OS025: 14, 21 and 24 ksi; C52400 has only 0.035 mm, OS035, 28 ksi); interpolated.
+    thermalConductivity: "%interpolate(tin, [0.0125, 0.05, 0.08, 0.1], [208, 69.2, 62.3, 50.2])%" # W/(m*K), 68 F (20 C); CDA, each alloy above (120, 40, 36 and 29 Btu/(ft*h*F)); interpolated.
+    color: ":bronze"
+    tags:
+      - metal
+      - copper
+      - bronze
+      - spring
+      - wear-resistant
+      - corrosion-resistant
 
   #
   # Nickel superalloys
@@ -719,7 +1195,20 @@ materials:
   #
   # Cast iron
   #
+  # Gray iron by its EN 1561 grade, through the three grades of Kemptener
+  # Eisengiesserei's (KE-AG) material table - EN-GJL-200, -250 and -300, which
+  # it gives as ASTM A48 class 30, 35/40 and 45 - measured on separately cast
+  # 30 mm bars, https://www.ke-ag.de/wp-content/uploads/2018/10/Werkstofftabelle-GJLver2018.pdf ;
+  # interpolated between them. Gray iron has no yield point: it is brittle in
+  # tension, and none is stated.
   cast-iron-gray:
+    parameters:
+      grade:
+        type: int
+        default: 200
+        min: 200
+        max: 300
+        desc: "EN 1561 grade, the EN-GJL number: its tensile strength in N/mm^2. 200 is about ASTM A48 class 30, 250 class 35/40 and 300 class 45 (KE-AG)"
     formal: Gray iron
     full: Gray cast iron
     desc: |
@@ -727,11 +1216,13 @@ materials:
       tension, excellent at damping vibration and easy to machine. Engine
       blocks and heads, brake discs and drums, flywheels, machine-tool beds and
       robot bases: the flakes conduct heat out of a brake disc and swallow the
-      chatter a machine frame would otherwise ring with.
+      chatter a machine frame would otherwise ring with. The stronger grades
+      are stiffer too, and conduct a little less.
     url: https://en.wikipedia.org/wiki/Gray_iron
-    density: 7150
+    density: "%interpolate(grade, [200, 250, 300], [7150, 7200, 7250])%" # kg/m^3; KE-AG, each grade above; interpolated.
+    youngsModulus: "%interpolate(grade, [200, 250, 300], [8.8e+10, 1.03e+11, 1.08e+11])%" # Pa; LOWER BOUND of KE-AG's load-dependent modulus for each grade (88-113, 103-118 and 108-137 GPa) - the secant modulus at a working stress, which falls as the stress rises; interpolated.
     poissonsRatio: 0.26 # EN-GJL-200 (~ASTM A48 Class 30); EN-GJL-200 (same for 250/300). https://www.ke-ag.de/wp-content/uploads/2018/10/Werkstofftabelle-GJLver2018.pdf
-    thermalConductivity: 50 # W/(m*K), EN-GJL-200 (~ASTM A48 Class 30); EN-GJL-200 at 100 C (46.0 at 500 C). https://www.ke-ag.de/wp-content/uploads/2018/10/Werkstofftabelle-GJLver2018.pdf
+    thermalConductivity: "%interpolate(grade, [200, 250, 300], [50, 48.5, 47.5])%" # W/(m*K), at 100 C (46.0, 44.5 and 43.0 at 500 C); KE-AG, each grade above; interpolated.
     tags:
       - metal
       - cast-iron
@@ -740,6 +1231,13 @@ materials:
       - damping
       - machinable
   cast-iron-ductile:
+    parameters:
+      grade:
+        type: int
+        default: 65
+        min: 60
+        max: 120
+        desc: "ASTM A536 grade, by its first number, the minimum tensile strength in ksi: 60 (60-40-18), 65 (65-45-12), 80 (80-55-06), 100 (100-70-03) or 120 (120-90-02)"
     formal: Ductile iron
     full: Ductile (nodular) cast iron
     desc: |
@@ -747,13 +1245,15 @@ materials:
       back most of the ductility and lets a casting be loaded in tension:
       crankshafts, steering knuckles, differential and suspension components,
       gearbox housings, pipe. Often the cheaper answer where a steel forging
-      would otherwise be specified.
+      would otherwise be specified. The low grades (60, 65) are the ductile
+      ones, stretching 18 and 12 per cent before they break; the high grades
+      (80 to 120) are stronger and stretch 6 to 2.
     url: https://en.wikipedia.org/wiki/Ductile_iron
     density: 7100
-    youngsModulus: 1.69e+11 # Pa, ASTM A536 65-45-12 (~EN-GJS-450-10/400-15); as cast. secondary: search-result excerpts quoting ASTM A536 grade table from a distributor ('65-45-12 ... 0.28 24.5 Msi (169 GPa)') and totalmateria.com/en-us/material/1055031 (EN-GJS-400-15: 169 GPa)
-    poissonsRatio: 0.28 # ASTM A536 65-45-12 (~EN-GJS-450-10/400-15); as cast. secondary: a search-result excerpt quoting ASTM A536 grade table from a distributor (65-45-12: 0.28)
-    yieldStrength: 3.1e+8 # Pa, ASTM A536 65-45-12 (~EN-GJS-450-10/400-15); grade 65-45-12; SPECIFICATION MINIMUM (ASTM A536, 45 ksi). secondary: a search-result excerpt quoting ASTM A536 grade table ('65-45-12 ... 65,000 psi (448 MPa) 45,000 psi (310 MPa)')
-    thermalConductivity: 36 # W/(m*K), ASTM A536 65-45-12 (~EN-GJS-450-10/400-15); room temperature. secondary: a search-result excerpt quoting makeitfrom.com 65-45-12 vs ductile cast iron comparison (36 W/m-K, range 31-36)
+    youngsModulus: 1.69e+11 # Pa, ASTM A536 65-45-12 (~EN-GJS-450-10/400-15); as cast; taken for every grade, as the Ductile Iron Society gives 162-170 GPa in tension for ductile iron at large (Ductile Iron Data for Design Engineers, section III, p. 3-3, https://assets.noviams.com/novi-file-uploads/dis/Education/Ductile_Iron_Data-49ae2969.pdf). secondary: search-result excerpts quoting ASTM A536 grade table from a distributor ('65-45-12 ... 0.28 24.5 Msi (169 GPa)') and totalmateria.com/en-us/material/1055031 (EN-GJS-400-15: 169 GPa)
+    poissonsRatio: 0.28 # ASTM A536 65-45-12 (~EN-GJS-450-10/400-15); as cast; taken for every grade. secondary: a search-result excerpt quoting ASTM A536 grade table from a distributor (65-45-12: 0.28)
+    yieldStrength: "%pick(grade, [60, 65, 80, 100, 120], [2.76e+8, 3.1e+8, 3.79e+8, 4.83e+8, 6.21e+8])%" # Pa; SPECIFICATION MINIMUM of each grade (ASTM A536: 276, 310, 379, 483 and 621 MPa), as the Ductile Iron Society reproduces its table (Ductile Iron Data for Design Engineers, section XII, p. 12-4). https://assets.noviams.com/novi-file-uploads/dis/Education/Ductile_Iron_Data-49ae2969.pdf
+    thermalConductivity: 36 # W/(m*K), ASTM A536 65-45-12 (~EN-GJS-450-10/400-15); room temperature; taken for every grade, which overstates it for the pearlitic ones (KE-AG gives 36.2 for the ferritic EN-GJS grades and 31.1 for 700-2, at 330 C: https://www.ke-ag.de/wp-content/uploads/2018/10/Kopie-von-Werkstofftabelle-GJS_ver2018-Tabelle1.pdf). secondary: a search-result excerpt quoting makeitfrom.com 65-45-12 vs ductile cast iron comparison (36 W/m-K, range 31-36)
     tags:
       - metal
       - cast-iron
