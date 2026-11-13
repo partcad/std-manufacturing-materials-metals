@@ -37,6 +37,17 @@ desc: Standard metals and alloys, as PartCAD materials.
 #   steels, where those tables agree with each other; where they do not, it is
 #   left out rather than invented, and a part made of such a material gets the
 #   simulator's default exactly as it did before anybody catalogued it.
+# What an analysis of a part made of one of these is solved with -- the
+# 'youngsModulus' (Pa), 'poissonsRatio', 'yieldStrength' (Pa) and
+# 'thermalConductivity' (W/(m*K)) beside each density -- is stated only where it
+# is known for the material named, and the comment beside each value says which
+# grade, in which condition, and where the number comes from. A property that is
+# absent was not known well enough to state: a part made of the material is then
+# analysed at the implementation's own default for it, which is visibly a
+# default, rather than at a guess that looks like a fact. PartCAD 0.10.17 and
+# later read these keys and hand them to a part's analyses. An older one ignores
+# them, and only its 'pc lint' reports them as unknown, so the 'partcad:' floor
+# above stays where it is: nothing an older PartCAD reads here has changed.
 materials:
   #
   # Aluminium
@@ -55,6 +66,10 @@ materials:
       by heat treatment afterwards.
     url: https://en.wikipedia.org/wiki/5052_aluminium_alloy
     density: 2680 # kg/m^3
+    youngsModulus: 7.03e+10 # Pa, 5052-H32; H32 (strain hardened, stabilised), typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5052H32
+    poissonsRatio: 0.33 # 5052-H32; H32 (strain hardened, stabilised), typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5052H32
+    yieldStrength: 1.93e+8 # Pa, 5052-H32; H32 (strain hardened, stabilised), typical; typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5052H32
+    thermalConductivity: 138 # W/(m*K), 5052-H32; H32 (strain hardened, stabilised), typical; at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5052H32
     mu: 1.05
     tags:
       - metal
@@ -76,6 +91,10 @@ materials:
       not a T6 frame unless it is re-treated.
     url: https://en.wikipedia.org/wiki/6061_aluminium_alloy
     density: 2700
+    youngsModulus: 6.89e+10 # Pa, 6061-T6; T6, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6061T6
+    poissonsRatio: 0.33 # 6061-T6; T6, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6061T6
+    yieldStrength: 2.76e+8 # Pa, 6061-T6; T6, typical; typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6061T6
+    thermalConductivity: 167 # W/(m*K), 6061-T6; T6, typical; at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6061T6
     mu: 1.05
     tags:
       - metal
@@ -95,6 +114,10 @@ materials:
       largely built out of it without anybody machining anything.
     url: https://en.wikipedia.org/wiki/6063_aluminium_alloy
     density: 2700
+    youngsModulus: 6.89e+10 # Pa, 6063-T5; T5, typical (1.6 mm). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6063T5
+    poissonsRatio: 0.33 # 6063-T5; T5, typical (1.6 mm). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6063T5
+    yieldStrength: 1.45e+8 # Pa, 6063-T5; T5, typical (1.6 mm); typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6063T5
+    thermalConductivity: 209 # W/(m*K), 6063-T5; T5, typical (1.6 mm); at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6063T5
     mu: 1.05
     tags:
       - metal
@@ -112,6 +135,10 @@ materials:
       frames, brackets and transport structures.
     url: https://en.wikipedia.org/wiki/6082_aluminium_alloy
     density: 2700
+    youngsModulus: 7.0e+10 # Pa, 6082-T6; T6/T651. https://www.aalco.co.uk/datasheets/Aluminium-Alloy-6082-T6T651-Plate_148.ashx
+    poissonsRatio: 0.33 # 6082-T6; T6. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA6061T6
+    yieldStrength: 2.55e+8 # Pa, 6082-T6; T6/T651 plate 6-12.5 mm; SPECIFICATION MINIMUM per BS EN 485-2:2008 (240 MPa min for 12.5-150 mm). https://www.aalco.co.uk/datasheets/Aluminium-Alloy-6082-T6T651-Plate_148.ashx
+    thermalConductivity: 180 # W/(m*K), 6082-T6; T6/T651, room temperature. https://www.aalco.co.uk/datasheets/Aluminium-Alloy-6082-T6T651-Plate_148.ashx
     mu: 1.05
     tags:
       - metal
@@ -131,6 +158,10 @@ materials:
       and 6000 series, and costs several times as much.
     url: https://en.wikipedia.org/wiki/7075_aluminium_alloy
     density: 2810
+    youngsModulus: 7.17e+10 # Pa, 7075-T6; T6, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA7075T6
+    poissonsRatio: 0.33 # 7075-T6; T6, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA7075T6
+    yieldStrength: 5.03e+8 # Pa, 7075-T6; T6, typical; typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA7075T6
+    thermalConductivity: 130 # W/(m*K), 7075-T6; T6, typical; at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA7075T6
     mu: 1.05
     tags:
       - metal
@@ -150,6 +181,10 @@ materials:
       welded.
     url: https://en.wikipedia.org/wiki/2024_aluminium_alloy
     density: 2780
+    youngsModulus: 7.31e+10 # Pa, 2024-T3; T3, typical (1.6 mm sheet). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA2024T3
+    poissonsRatio: 0.33 # 2024-T3; T3, typical (1.6 mm sheet). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA2024T3
+    yieldStrength: 3.45e+8 # Pa, 2024-T3; T3, typical (1.6 mm sheet); typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA2024T3
+    thermalConductivity: 121 # W/(m*K), 2024-T3; T3, typical (1.6 mm sheet); at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA2024T3
     mu: 1.05
     tags:
       - metal
@@ -168,6 +203,10 @@ materials:
       was made from.
     url: https://en.wikipedia.org/wiki/5083_aluminium_alloy
     density: 2660
+    youngsModulus: 7.03e+10 # Pa, 5083-H116; H116, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5083H116
+    poissonsRatio: 0.33 # 5083-H116; H116, typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5083H116
+    yieldStrength: 2.28e+8 # Pa, 5083-H116; H116, typical; typical (AA), not a specification minimum. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5083H116
+    thermalConductivity: 117 # W/(m*K), 5083-H116; H116, typical; at 77 F (25 C). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MA5083H116
     mu: 1.05
     tags:
       - metal
@@ -187,6 +226,9 @@ materials:
       radiographed and certified.
     url: https://en.wikipedia.org/wiki/Aluminium_alloy
     density: 2680
+    youngsModulus: 7.24e+10 # Pa, A356.0-T6; T6 (cast). https://xometry.asia/wp-content/uploads/2025/07/1774070994-A356-Datasheet.pdf
+    poissonsRatio: 0.33 # A356.0-T6; T6 (cast). WebSearch result summarising MatWeb-derived A356.0-T6 sheet and makeitfrom.com/material-properties/356.0-T6-Cast-Aluminum
+    thermalConductivity: 151 # W/(m*K), A356.0-T6; T6, room temperature. https://xometry.asia/wp-content/uploads/2025/07/1774070994-A356-Datasheet.pdf
     mu: 1.05
     tags:
       - metal
@@ -206,6 +248,9 @@ materials:
       during the shot.
     url: https://en.wikipedia.org/wiki/Aluminium_alloy
     density: 2710
+    youngsModulus: 7.1e+10 # Pa, A380.0-F; F (as die cast). https://xometry.asia/wp-content/uploads/2021/12/1773641044-A380-Datasheet.pdf
+    yieldStrength: 1.59e+8 # Pa, A380.0-F; F (as die cast); typical. WebSearch snippet citing Dynacast die-cast metal properties table (A380 0.2% yield 23 ksi) and a NADCA-derived DTIC report (23 ksi); dynacast.com page fetch returned no table
+    thermalConductivity: 96.2 # W/(m*K), A380.0-F; F, room temperature. WebSearch snippets: die-casting tables listing 55.6 BTU/(ft hr F) = 96.2 W/(m K) (NADCA value); patent text 'A380 ... 96.2 W/(m*k) in the literature'
     mu: 1.05
     tags:
       - metal
@@ -227,6 +272,10 @@ materials:
       hardened when it has to.
     url: https://en.wikipedia.org/wiki/Carbon_steel
     density: 7870
+    youngsModulus: 2.0e+11 # Pa, AISI 1018; cold drawn. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Carbon-Steel-Grade-1018-Data-Sheet_Elgin.pdf
+    poissonsRatio: 0.29 # AISI 1018; cold drawn. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Carbon-Steel-Grade-1018-Data-Sheet_Elgin.pdf
+    yieldStrength: 3.7e+8 # Pa, AISI 1018; cold drawn (catalogue states no condition; cold-drawn bar assumed as the usual 1018 stock). https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Carbon-Steel-Grade-1018-Data-Sheet_Elgin.pdf
+    thermalConductivity: 51.9 # W/(m*K), AISI 1018; room temperature. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Carbon-Steel-Grade-1018-Data-Sheet_Elgin.pdf
     mu: 0.6
     tags:
       - metal
@@ -243,6 +292,10 @@ materials:
       as supplied and noticeably less pleasant to weld.
     url: https://en.wikipedia.org/wiki/Carbon_steel
     density: 7870
+    youngsModulus: 2.0e+11 # Pa, AISI 1045; any (insensitive to condition). https://kmac-distribution.com/technical/1045-carbon-steel.htm
+    poissonsRatio: 0.29 # AISI 1045; any. https://kmac-distribution.com/technical/1045-carbon-steel.htm
+    yieldStrength: 5.17e+8 # Pa, AISI 1045; cold finished (cold drawn) bar, 'as supplied'; typical. https://www.myalro.com/gradeinfo/Metals_Gridpt.aspx?gp=0004
+    thermalConductivity: 51.9 # W/(m*K), AISI 1045; room temperature (temperature not stated by source). https://kmac-distribution.com/technical/1045-carbon-steel.htm
     mu: 0.6
     tags:
       - metal
@@ -259,6 +312,10 @@ materials:
       grade rather than an alloy.
     url: https://en.wikipedia.org/wiki/A36_steel
     density: 7850
+    youngsModulus: 2.0e+11 # Pa, ASTM A36; hot rolled. https://en.wikipedia.org/wiki/A36_steel
+    poissonsRatio: 0.26 # ASTM A36; hot rolled. https://en.wikipedia.org/wiki/A36_steel
+    yieldStrength: 2.5e+8 # Pa, ASTM A36; SPECIFICATION MINIMUM (ASTM A36, plates/bars/shapes < 8 in thick; 220 MPa above 8 in). https://en.wikipedia.org/wiki/A36_steel
+    thermalConductivity: 50.2 # W/(m*K), ASTM A36; room temperature. https://www.onlinemetals.com/en/product-guide/alloy/A36
     mu: 0.6
     tags:
       - metal
@@ -276,6 +333,10 @@ materials:
       needing heat treatment afterwards for most airframe work.
     url: https://en.wikipedia.org/wiki/41xx_steel
     density: 7850
+    youngsModulus: 2.05e+11 # Pa, AISI 4130; normalized 870 C, 25 mm round. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r
+    poissonsRatio: 0.29 # AISI 4130; normalized. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r
+    yieldStrength: 4.35e+8 # Pa, AISI 4130; normalized at 870 C (1600 F), 25 mm round - the usual condition (N) of 4130 aircraft/chassis tube; typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r
+    thermalConductivity: 42.7 # W/(m*K), AISI 4130; at 100 C. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m4130r
     mu: 0.6
     tags:
       - metal
@@ -294,6 +355,10 @@ materials:
       after machining.
     url: https://en.wikipedia.org/wiki/41xx_steel
     density: 7850
+    youngsModulus: 2.05e+11 # Pa, AISI 4140; normalized. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf
+    poissonsRatio: 0.29 # AISI 4140; normalized. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf
+    yieldStrength: 6.55e+8 # Pa, AISI 4140; normalized 870 C, 25 mm round, 302 HB (~32 HRC) - comparable to the 28-32 HRC 'pre-hardened' (4140 HT) bar the catalogue describes; typical. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf
+    thermalConductivity: 42.6 # W/(m*K), AISI 4140; at 100 C. https://www.mwcomponents.com/uploads/Resource-Center/Elgin-Material-Sheets/Alloy-Steel-Grade-4140-Fact-Sheet_Elgin-Website.pdf
     mu: 0.6
     tags:
       - metal
@@ -311,6 +376,9 @@ materials:
       and it is one of the alloys hydrogen embrittlement rules are written for.
     url: https://en.wikipedia.org/wiki/SAE_steel_grades
     density: 7850
+    youngsModulus: 2.05e+11 # Pa, AISI 4340; normalized / Q&T (insensitive). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=M434AE
+    poissonsRatio: 0.29 # AISI 4340; oil quenched and tempered. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=m434ap
+    thermalConductivity: 44.5 # W/(m*K), AISI 4340; room temperature. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=M434AE
     mu: 0.6
     tags:
       - metal
@@ -328,6 +396,9 @@ materials:
       structure has to absorb a crash rather than resist it.
     url: https://en.wikipedia.org/wiki/Dual-phase_steel
     density: 7850
+    youngsModulus: 2.1e+11 # Pa, DP600 (HCT590X / CR330Y590T-DP); as delivered. https://www.SteelConstruction.info/images/8/86/GN_3-01.pdf
+    poissonsRatio: 0.3 # DP600 (HCT590X / CR330Y590T-DP); as delivered. https://www.SteelConstruction.info/images/8/86/GN_3-01.pdf
+    yieldStrength: 4.0e+8 # Pa, DP600 (HCT590X / CR330Y590T-DP); cold rolled, as delivered (before forming/bake hardening); typical. https://tatasteeluk.com/sites/default/files/tata-steel-automotive-cr-dp600-uc-cr330y590t-hct590x-dual-phase-datasheet-en.pdf
     mu: 0.6
     tags:
       - metal
@@ -348,6 +419,9 @@ materials:
       cares which cars have it.
     url: https://en.wikipedia.org/wiki/Boron_steel
     density: 7850
+    youngsModulus: 2.1e+11 # Pa, 22MnB5 (Usibor-class), press hardened; press hardened (martensitic). https://www.SteelConstruction.info/images/8/86/GN_3-01.pdf
+    poissonsRatio: 0.3 # 22MnB5 (Usibor-class), press hardened; press hardened. https://www.SteelConstruction.info/images/8/86/GN_3-01.pdf
+    yieldStrength: 1.1e+9 # Pa, 22MnB5 (Usibor-class), press hardened; after hot stamping (austenitised ~900 C, die quenched); typical/'information only'. https://northamerica.arcelormittal.com/media/hh1cw2v5/arcelormittal_data-sheet_steels-for-hot-stamping_2024_x1a.pdf
     mu: 0.6
     tags:
       - metal
@@ -369,6 +443,10 @@ materials:
       is not meant to be welded.
     url: https://en.wikipedia.org/wiki/SAE_steel_grades
     density: 8000
+    youngsModulus: 1.93e+11 # Pa, AISI 303; annealed bar. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MQ303G
+    poissonsRatio: 0.25 # AISI 303; annealed bar. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MQ303G
+    yieldStrength: 2.4e+8 # Pa, AISI 303; annealed bar, tested at room temperature; typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MQ303G
+    thermalConductivity: 16.2 # W/(m*K), AISI 303; at 100 C. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MQ303G
     mu: 0.7
     tags:
       - metal
@@ -386,6 +464,10 @@ materials:
       ferromagnetism in it.
     url: https://en.wikipedia.org/wiki/SAE_304_stainless_steel
     density: 8000
+    youngsModulus: 1.93e+11 # Pa, AISI 304; annealed. https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10510/file/CLF_ProductData_304-304LSS_052021.pdf
+    poissonsRatio: 0.29 # AISI 304; annealed. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=MQ304A
+    yieldStrength: 2.9e+8 # Pa, AISI 304; annealed sheet/strip; typical. https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10510/file/CLF_ProductData_304-304LSS_052021.pdf
+    thermalConductivity: 16.2 # W/(m*K), AISI 304; at 100 C (212 F). https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10510/file/CLF_ProductData_304-304LSS_052021.pdf
     mu: 0.7
     tags:
       - metal
@@ -404,6 +486,8 @@ materials:
       printed metal parts.
     url: https://en.wikipedia.org/wiki/SAE_316L_stainless_steel
     density: 8000
+    youngsModulus: 1.93e+11 # Pa, AISI 316L; annealed. https://d1io3yog0oux5.cloudfront.net/_464c1f648dd1e0c96c45d68cdce1cf31/clevelandcliffs/db/1190/10513/file/CLF_ProductData_316-316LSS_052021.pdf
+    thermalConductivity: 16.2 # W/(m*K), AISI 316L; at 100 C (212 F). https://d1io3yog0oux5.cloudfront.net/_464c1f648dd1e0c96c45d68cdce1cf31/clevelandcliffs/db/1190/10513/file/CLF_ProductData_316-316LSS_052021.pdf
     mu: 0.7
     tags:
       - metal
@@ -423,6 +507,10 @@ materials:
       metal alloy.
     url: https://en.wikipedia.org/wiki/Precipitation_hardening
     density: 7800
+    youngsModulus: 1.97e+11 # Pa, 17-4 PH (UNS S17400); H900. https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10503/file/CLF_ProductData_17-4-PHSS_052021.pdf
+    poissonsRatio: 0.272 # 17-4 PH (UNS S17400); all conditions. https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10503/file/CLF_ProductData_17-4-PHSS_052021.pdf
+    yieldStrength: 1.275e+9 # Pa, 17-4 PH (UNS S17400); H900 (aged 482 C / 900 F, 1 h); typical, transverse. https://d1io3yog0oux5.cloudfront.net/_7ce3a04c09e74bf31ff5f89fc888db25/clevelandcliffs/db/1190/10503/file/CLF_ProductData_17-4-PHSS_052021.pdf
+    thermalConductivity: 17.8 # W/(m*K), 17-4 PH (UNS S17400); H900, mean 21-100 C. https://www.atimaterials.com/Products/Documents/datasheets/stainless-specialty-steel/precipitationhardening/ati_17-4_tds_en_v2.pdf
     mu: 0.6
     tags:
       - metal
@@ -447,6 +535,10 @@ materials:
       and never rubbing.
     url: https://en.wikipedia.org/wiki/Ti-6Al-4V
     density: 4430
+    youngsModulus: 1.138e+11 # Pa, Ti-6Al-4V (Grade 5); annealed. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtp641
+    poissonsRatio: 0.342 # Ti-6Al-4V (Grade 5); annealed. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtp641
+    yieldStrength: 8.8e+8 # Pa, Ti-6Al-4V (Grade 5); annealed; typical (Allvac data). https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtp641
+    thermalConductivity: 6.7 # W/(m*K), Ti-6Al-4V (Grade 5); annealed, room temperature. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtp641
     tags:
       - metal
       - titanium
@@ -464,6 +556,10 @@ materials:
       chemical and marine hardware, and surgical instruments.
     url: https://en.wikipedia.org/wiki/Titanium
     density: 4510
+    youngsModulus: 1.02e+11 # Pa, CP titanium Grade 2; annealed 2 h at 700 C. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtu021
+    poissonsRatio: 0.34 # CP titanium Grade 2; annealed. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtu021
+    yieldStrength: 3.4e+8 # Pa, CP titanium Grade 2; annealed 2 h at 700 C; typical. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtu021
+    thermalConductivity: 16.4 # W/(m*K), CP titanium Grade 2; annealed, room temperature. https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=mtu021
     tags:
       - metal
       - titanium
@@ -485,6 +581,10 @@ materials:
       damps vibration well, corrodes readily unless coated, and burns as swarf.
     url: https://en.wikipedia.org/wiki/Magnesium_alloy
     density: 1770
+    youngsModulus: 4.5e+10 # Pa, AZ31B; O / H24 (insensitive to temper). WebSearch snippets: matmatch.com/materials/mitf518-az31b-o (45 GPa at 23 C) and techsteel.net/alloy/az31b-0 (44.8 GPa)
+    poissonsRatio: 0.35 # AZ31B; H24. https://www.techsteel.net/alloy/az31b-h24
+    yieldStrength: 2.0e+8 # Pa, AZ31B; H24 sheet 0.4-6.3 mm (0.016-0.249 in). https://www.smithshp.com/assets/pdf/magnesium/az31b-magnesium-english.pdf
+    thermalConductivity: 96 # W/(m*K), AZ31B; H24, room temperature. https://www.techsteel.net/alloy/az31b-h24
     tags:
       - metal
       - magnesium
@@ -501,6 +601,10 @@ materials:
       casts thinner walls than aluminium can.
     url: https://en.wikipedia.org/wiki/Magnesium_alloy
     density: 1810
+    youngsModulus: 4.48e+10 # Pa, AZ91D; F (as die cast). https://www.tekogehause.de/uploads/manuali/materiali/AZ91D.pdf
+    poissonsRatio: 0.35 # AZ91D; F. https://www.tekogehause.de/uploads/manuali/materiali/AZ91D.pdf
+    yieldStrength: 1.5e+8 # Pa, AZ91D; F (as die cast); typical. https://www.tekogehause.de/uploads/manuali/materiali/AZ91D.pdf
+    thermalConductivity: 72.7 # W/(m*K), AZ91D; F, room temperature. https://www.tekogehause.de/uploads/manuali/materiali/AZ91D.pdf
     tags:
       - metal
       - magnesium
@@ -521,6 +625,8 @@ materials:
       heavy, and it work hardens as it is bent.
     url: https://en.wikipedia.org/wiki/Copper
     density: 8890
+    youngsModulus: 1.17e+11 # Pa, C11000 (Cu-ETP); any temper. https://alloys.copper.org/alloy/C11000?alloy=C11000
+    thermalConductivity: 391 # W/(m*K), C11000 (Cu-ETP); 68 F (20 C), annealed. https://alloys.copper.org/alloy/C11000?alloy=C11000
     tags:
       - metal
       - copper
@@ -536,6 +642,9 @@ materials:
       substitutes are displacing it where drinking water or RoHS is involved.
     url: https://en.wikipedia.org/wiki/Brass
     density: 8500
+    youngsModulus: 1.02e+11 # Pa, C36000 (CuZn36Pb3, CW603N); room temperature reference value. https://www.wieland.com/de/content/download/9839/file/Z23_EX_EN.pdf
+    yieldStrength: 2.0e+8 # Pa, C36000 (CuZn36Pb3, CW603N); rod R400 (EN 12164), 2-25 mm; SPECIFICATION MINIMUM Rp0.2. https://www.wieland.com/de/content/download/9839/file/Z23_EX_EN.pdf
+    thermalConductivity: 100 # W/(m*K), C36000 (CuZn36Pb3, CW603N); room temperature reference value. https://www.wieland.com/de/content/download/9839/file/Z23_EX_EN.pdf
     tags:
       - metal
       - copper
@@ -552,6 +661,9 @@ materials:
       sintered, oil-impregnated bushing is made of.
     url: https://en.wikipedia.org/wiki/Bronze
     density: 8930
+    youngsModulus: 1.0e+11 # Pa, C93200 (SAE 660); continuous cast. https://concast.com/c93200.php
+    yieldStrength: 1.38e+8 # Pa, C93200 (SAE 660); continuous cast; SPECIFICATION MINIMUM (ASTM B505), measured at 0.5% extension under load, not 0.2% offset. https://concast.com/c93200.php
+    thermalConductivity: 58.2 # W/(m*K), C93200 (SAE 660); 20 C. https://concast.com/c93200.php
     tags:
       - metal
       - copper
@@ -573,6 +685,10 @@ materials:
       now printed.
     url: https://en.wikipedia.org/wiki/Inconel
     density: 8190
+    youngsModulus: 1.999e+11 # Pa, Inconel 718; solution annealed + aged, 70 F. https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-718.pdf
+    poissonsRatio: 0.294 # Inconel 718; annealed + aged, 70 F. https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-718.pdf
+    yieldStrength: 1.034e+9 # Pa, Inconel 718; solution annealed + precipitation hardened (1700-1850 F anneal + standard age); SPECIFICATION MINIMUM (AMS 5662/5596). https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-718.pdf
+    thermalConductivity: 11.4 # W/(m*K), Inconel 718; annealed + aged, 70 F. https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-718.pdf
     tags:
       - metal
       - nickel
@@ -589,6 +705,10 @@ materials:
       overlay on things made of something cheaper.
     url: https://en.wikipedia.org/wiki/Inconel
     density: 8440
+    youngsModulus: 2.075e+11 # Pa, Inconel 625; annealed, 21 C. https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-625.pdf
+    poissonsRatio: 0.278 # Inconel 625; annealed, 21 C. https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-625.pdf
+    yieldStrength: 4.14e+8 # Pa, Inconel 625; annealed rod/bar/plate; LOWER BOUND of Special Metals nominal range 414-655 MPa (60-95 ksi). https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-625.pdf
+    thermalConductivity: 9.8 # W/(m*K), Inconel 625; 21 C (annealed 2100 F/1 h). https://www.specialmetals.com/documents/technical-bulletins/inconel/inconel-alloy-625.pdf
     tags:
       - metal
       - nickel
@@ -610,6 +730,8 @@ materials:
       chatter a machine frame would otherwise ring with.
     url: https://en.wikipedia.org/wiki/Gray_iron
     density: 7150
+    poissonsRatio: 0.26 # EN-GJL-200 (~ASTM A48 Class 30); EN-GJL-200 (same for 250/300). https://www.ke-ag.de/wp-content/uploads/2018/10/Werkstofftabelle-GJLver2018.pdf
+    thermalConductivity: 50 # W/(m*K), EN-GJL-200 (~ASTM A48 Class 30); EN-GJL-200 at 100 C (46.0 at 500 C). https://www.ke-ag.de/wp-content/uploads/2018/10/Werkstofftabelle-GJLver2018.pdf
     tags:
       - metal
       - cast-iron
@@ -628,6 +750,10 @@ materials:
       would otherwise be specified.
     url: https://en.wikipedia.org/wiki/Ductile_iron
     density: 7100
+    youngsModulus: 1.69e+11 # Pa, ASTM A536 65-45-12 (~EN-GJS-450-10/400-15); as cast. WebSearch snippets: ASTM A536 grade table from a distributor ('65-45-12 ... 0.28 24.5 Msi (169 GPa)') and totalmateria.com/en-us/material/1055031 (EN-GJS-400-15: 169 GPa)
+    poissonsRatio: 0.28 # ASTM A536 65-45-12 (~EN-GJS-450-10/400-15); as cast. WebSearch snippet: ASTM A536 grade table from a distributor (65-45-12: 0.28)
+    yieldStrength: 3.1e+8 # Pa, ASTM A536 65-45-12 (~EN-GJS-450-10/400-15); grade 65-45-12; SPECIFICATION MINIMUM (ASTM A536, 45 ksi). WebSearch snippet: ASTM A536 grade table ('65-45-12 ... 65,000 psi (448 MPa) 45,000 psi (310 MPa)')
+    thermalConductivity: 36 # W/(m*K), ASTM A536 65-45-12 (~EN-GJS-450-10/400-15); room temperature. WebSearch snippet: makeitfrom.com 65-45-12 vs ductile cast iron comparison (36 W/m-K, range 31-36)
     tags:
       - metal
       - cast-iron
@@ -649,6 +775,8 @@ materials:
       is why it stays out of anything that has to be light.
     url: https://en.wikipedia.org/wiki/Zamak
     density: 6600
+    yieldStrength: 2.08e+8 # Pa, Zamak 3 (ZL3 / ZP3, ASTM AG40A); as die cast; 0.2% offset; typical. https://en.wikipedia.org/wiki/Zamak
+    thermalConductivity: 113 # W/(m*K), Zamak 3 (ZL3 / ZP3, ASTM AG40A); room temperature. https://en.wikipedia.org/wiki/Zamak
     tags:
       - metal
       - zinc
